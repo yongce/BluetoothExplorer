@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ble_scan_perm_rationale">Location permission is required to scan the BLE devices.</string>
+
+    <string name="ble_scanner">BLE Scanner</string>
+    <string name="ble_status_scanning">Scanning… (%d devices found)</string>
+    <string name="ble_status_scanning_done">Scanning done (%d devices found)</string>
+    <string name="ble_scan_start">Scan</string>
+    <string name="ble_scan_stop">Stop</string>
+    <string name="ble_unknown_device">unknown</string>
+
+    <string name="ble_advertiser">BLE Advertiser</string>
+</resources>

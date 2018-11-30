@@ -1,0 +1,28 @@
+buildscript {
+    ext {
+        androidProjectCommon = "${rootProject.projectDir}/android_project_common.gradle"
+        androidModuleCommon = "${rootProject.projectDir}/android_module_common.gradle"
+    }
+    apply from: "${androidProjectCommon}"
+
+    repositories {
+        google()
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath "com.jakewharton:butterknife-gradle-plugin:${versions.butterknife}"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
