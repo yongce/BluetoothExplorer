@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.jakewharton.butterknife'
 apply from: "${androidModuleCommon}"
 
@@ -25,6 +27,7 @@ dependencies {
 
     compileOnly deps.google.wearableFramework
 
+    implementation deps.kotlin.stdlib
     implementation deps.google.wearableSupport
     implementation deps.androidx.wear
     implementation deps.androidx.appcompat

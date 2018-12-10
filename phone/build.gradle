@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.jakewharton.butterknife'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 apply from: "${androidModuleCommon}"
 
 android {
@@ -23,6 +25,7 @@ android {
 dependencies {
     implementation project(':common')
 
+    implementation deps.kotlin.stdlib
     implementation deps.androidx.appcompat
     implementation deps.androidx.design
     implementation deps.androidx.constraintLayout
@@ -30,7 +33,7 @@ dependencies {
     implementation deps.timber
     implementation deps.ycdev.androidBase
     implementation deps.butterknife
-    annotationProcessor deps.butterknifeCompiler
+    kapt deps.butterknifeCompiler
 
     testImplementation deps.test.junit
     testImplementation deps.test.hamcrestCore
