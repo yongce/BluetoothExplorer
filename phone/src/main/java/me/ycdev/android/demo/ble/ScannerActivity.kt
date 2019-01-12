@@ -1,14 +1,18 @@
 package me.ycdev.android.demo.ble
 
+import android.bluetooth.le.ScanFilter
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.ParcelUuid
 import android.os.SystemClock
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
+import android.widget.RadioButton
 import android.widget.TextView
 import androidx.annotation.NonNull
 import androidx.annotation.Nullable
@@ -23,31 +27,41 @@ import androidx.recyclerview.widget.RecyclerView
 import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
-import me.ycdev.android.demo.ble.common.BleScanner
+import me.ycdev.android.demo.ble.common.BleConstants
 import me.ycdev.android.demo.ble.common.BluetoothHelper
-import me.ycdev.android.demo.ble.common.DeviceInfo
+import me.ycdev.android.demo.ble.common.client.BleScanner
+import me.ycdev.android.demo.ble.common.client.DeviceInfo
+import me.ycdev.android.demo.ble.common.server.MagicRadioProfile
+import me.ycdev.android.demo.ble.common.server.TimeServiceProfile
 import me.ycdev.android.lib.common.perms.PermissionCallback
 import me.ycdev.android.lib.common.perms.PermissionUtils
-import me.ycdev.android.lib.common.utils.DateTimeUtils
 import timber.log.Timber
-import java.util.*
+import java.text.SimpleDateFormat
+import java.util.Collections
+import java.util.Date
+import java.util.Locale
+import java.util.Objects
 
 class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCallback,
     BleScanner.ScanListener {
-
+    @BindView(R.id.only_named_devices)
+    internal lateinit var onlyNamedDevicesCheckbox: CheckBox
     @BindView(R.id.scan_btn)
-    internal lateinit var mBleScanBtn: Button
+    internal lateinit var leScanBtn: Button
     @BindView(R.id.status)
-    internal lateinit var mStatusView: TextView
+    internal lateinit var statusView: TextView
     @BindView(R.id.devices)
-    internal lateinit var mListView: RecyclerView
+    internal lateinit var listView: RecyclerView
 
-    private lateinit var mAdapter: MyAdapter
-    private val mDeviceComparator = DeviceInfo.TimestampComparator()
+    private lateinit var selectedFilterCheckBox: RadioButton
+
+    private lateinit var adapter: MyAdapter
+    private val deviceComparator = DeviceInfo.TimestampComparator()
 
     override fun onCreate(@Nullable savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scanner)
+        Timber.tag(TAG).d("onCreate")
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -59,8 +73,11 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
     private fun initContentViews() {
         ButterKnife.bind(this)
 
-        mAdapter = MyAdapter(this)
-        mAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+        selectedFilterCheckBox = findViewById(R.id.filter_all)
+        selectedFilterCheckBox.isChecked = true
+
+        adapter = MyAdapter(this)
+        adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 updateContentViews()
             }
@@ -70,25 +87,29 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
             }
         })
 
-        mListView.adapter = mAdapter
-        mListView.layoutManager = LinearLayoutManager(this)
+        listView.adapter = adapter
+        listView.layoutManager = LinearLayoutManager(this)
 
         val itemDecoration = DividerItemDecoration(
             this,
             DividerItemDecoration.VERTICAL
         )
-        mListView.addItemDecoration(itemDecoration)
+        listView.addItemDecoration(itemDecoration)
 
         updateContentViews()
     }
 
     private fun updateContentViews() {
         if (BleScanner.instance.isScanning) {
-            mBleScanBtn.setText(R.string.ble_scan_stop)
-            mStatusView.text = getString(R.string.ble_status_scanning, mAdapter.itemCount)
+            leScanBtn.setText(R.string.ble_scan_stop)
+            statusView.text = getString(
+                R.string.ble_status_scanning,
+                selectedFilterCheckBox.text,
+                adapter.itemCount
+            )
         } else {
-            mBleScanBtn.setText(R.string.ble_scan_start)
-            mStatusView.text = getString(R.string.ble_status_scanning_done, mAdapter.itemCount)
+            leScanBtn.setText(R.string.ble_scan_start)
+            statusView.text = getString(R.string.ble_status_scanning_done, adapter.itemCount)
         }
     }
 
@@ -101,7 +122,8 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int, @NonNull permissions: Array<String>,
+        requestCode: Int,
+        @NonNull permissions: Array<String>,
         @NonNull grantResults: IntArray
     ) {
         if (requestCode == RC_BLE_SCAN_PERMS) {
@@ -116,15 +138,88 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
     }
 
     override fun onClick(v: View) {
-        if (v === mBleScanBtn) {
+        if (v === leScanBtn) {
             scanBleDevices()
         }
     }
 
+    @OnClick(
+        R.id.filter_all,
+        R.id.filter_magic_ww,
+        R.id.filter_magic_future,
+        R.id.filter_magic_radio,
+        R.id.filter_time_service
+    )
+    fun onCheckboxClick(v: View) {
+        if (v != selectedFilterCheckBox) {
+            selectedFilterCheckBox.isChecked = false
+            selectedFilterCheckBox = v as RadioButton
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Timber.tag(TAG).d("onDestroy")
+        BleScanner.instance.stopScanning()
+    }
+
     override fun onDeviceFound(@NonNull device: DeviceInfo, newDevice: Boolean) {
         val devices = BleScanner.instance.devices
-        Collections.sort(devices, mDeviceComparator)
-        mAdapter.submitList(devices)
+        Collections.sort(devices, deviceComparator)
+        adapter.submitList(devices)
+    }
+
+    private fun buildScanFiltersForMagicWw(): List<ScanFilter> {
+        val filters = ArrayList<ScanFilter>()
+        filters.add(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(BleConstants.SERVICE_MAGIC_WW))
+                .build()
+        )
+        return filters
+    }
+
+    private fun buildScanFiltersForMagicFuture(): List<ScanFilter> {
+        val filters = ArrayList<ScanFilter>()
+        filters.add(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(BleConstants.SERVICE_MAGIC_FUTURE))
+                .build()
+        )
+        return filters
+    }
+
+    private fun buildScanFiltersForMagicRadio(): List<ScanFilter> {
+        val filters = ArrayList<ScanFilter>()
+        filters.add(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(MagicRadioProfile.RADIO_SERVICE))
+                .build()
+        )
+        return filters
+    }
+
+    private fun buildScanFiltersForTimeService(): List<ScanFilter> {
+        val filters = ArrayList<ScanFilter>()
+        filters.add(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(TimeServiceProfile.TIME_SERVICE))
+                .build()
+        )
+        return filters
+    }
+
+    private fun setupScanFilter() {
+        when (selectedFilterCheckBox.id) {
+            R.id.filter_all -> BleScanner.instance.setScanFilters(null)
+            R.id.filter_magic_ww -> BleScanner.instance.setScanFilters(buildScanFiltersForMagicWw())
+            R.id.filter_magic_future -> BleScanner.instance.setScanFilters(buildScanFiltersForMagicFuture())
+            R.id.filter_magic_radio -> BleScanner.instance.setScanFilters(buildScanFiltersForMagicRadio())
+            R.id.filter_time_service -> BleScanner.instance.setScanFilters(buildScanFiltersForTimeService())
+            else -> throw RuntimeException("Unknown filter")
+        }
+
+        BleScanner.instance.setOnlyNamedDevices(onlyNamedDevicesCheckbox.isChecked)
     }
 
     @OnClick(R.id.scan_btn)
@@ -142,6 +237,8 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         val scanning = BleScanner.instance.isScanning
         Timber.tag(TAG).d("BLE is scanning: %s", scanning)
         if (!scanning) {
+            setupScanFilter()
+            adapter.submitList(null)
             BleScanner.instance.startScanning(this)
         } else {
             BleScanner.instance.stopScanning()
@@ -159,8 +256,10 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         }
     }
 
-    private class MyAdapter internal constructor(context: Context) :
+    private class MyAdapter internal constructor(val context: Context) :
         ListAdapter<DeviceInfo, MyViewHolder>(MyDiffItemCallback()) {
+        private val timestampFormatter = SimpleDateFormat("dd-HH:mm:ss", Locale.US)
+
         private val mInflater: LayoutInflater = LayoutInflater.from(context)
         private val mUnknownDeviceName: String = context.getString(R.string.ble_unknown_device)
 
@@ -184,9 +283,18 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
             )
             holder.addressView.text = btDevice.address
 
-            val timestamp =
-                System.currentTimeMillis() - (SystemClock.elapsedRealtimeNanos() - item.scanResult.timestampNanos) / 1000000
-            holder.timestampView.text = DateTimeUtils.getReadableTimeStamp(timestamp)
+            val timestamp = System.currentTimeMillis() -
+                    (SystemClock.elapsedRealtimeNanos() - item.scanResult.timestampNanos) / 1000000
+            holder.timestampView.text = timestampFormatter.format(Date(timestamp))
+
+            holder.itemView.setOnClickListener {
+                // stop BLE scan first
+                BleScanner.instance.stopScanning()
+
+                val intent: Intent = Intent(context, BleClientActivity::class.java)
+                intent.putExtra(BleClientActivity.EXTRA_DEVICE, btDevice)
+                context.startActivity(intent)
+            }
         }
     }
 
@@ -204,7 +312,7 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
     }
 
     companion object {
-        private const val TAG = "bledemo.scanner"
+        private const val TAG = "ScannerActivity"
 
         private const val RC_BLE_SCAN_PERMS = 100
         private const val RC_BT_ENABLE = 101

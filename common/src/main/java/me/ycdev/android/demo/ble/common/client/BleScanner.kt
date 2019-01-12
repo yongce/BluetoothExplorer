@@ -1,4 +1,4 @@
-package me.ycdev.android.demo.ble.common
+package me.ycdev.android.demo.ble.common.client
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -11,68 +11,78 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import androidx.annotation.MainThread
 import androidx.annotation.NonNull
+import androidx.annotation.Nullable
+import me.ycdev.android.demo.ble.common.BluetoothHelper
+import me.ycdev.android.demo.ble.common.R.string
 import me.ycdev.android.lib.common.perms.PermissionCallback
 import me.ycdev.android.lib.common.perms.PermissionRequestParams
 import me.ycdev.android.lib.common.perms.PermissionUtils
 import me.ycdev.android.lib.common.utils.ApplicationUtils
 import timber.log.Timber
-import java.util.*
 
 class BleScanner private constructor() {
-
-    private val mAppContext: Context = ApplicationUtils.getApplicationContext()
-    private var mLeScanner: BluetoothLeScanner? = null
-    private val mScanCallback = MyScanCallback()
+    private val appContext: Context = ApplicationUtils.getApplicationContext()
+    private var leScanner: BluetoothLeScanner? = null
+    private val scanCallback = MyScanCallback()
     var isScanning: Boolean = false
         private set
-    private var mListener: ScanListener? = null
+    private var scanSetting: ScanSettings? = null
+    private var scanFilters: List<ScanFilter>? = null
+    private var listener: ScanListener? = null
+    private var onlyNamedDevices = false
 
-    private val mAllScanResults = HashMap<String, DeviceInfo>()
-    private var mNextNumber = 1
+    private val allScanResults = HashMap<String, DeviceInfo>()
+    private var nextNumber = 1
 
     val devices: List<DeviceInfo>
-        get() = ArrayList(mAllScanResults.values)
+        get() = ArrayList(allScanResults.values)
 
     interface ScanListener {
         fun onDeviceFound(@NonNull device: DeviceInfo, newDevice: Boolean)
     }
 
+    fun setScanSettings(@Nullable scanSettings: ScanSettings) {
+        scanSetting = scanSettings
+    }
+
+    fun setScanFilters(@Nullable scanFilters: List<ScanFilter>?) {
+        this.scanFilters = scanFilters
+    }
+
+    fun setOnlyNamedDevices(onlyNamedDevices: Boolean) {
+        this.onlyNamedDevices = onlyNamedDevices
+    }
+
     @MainThread
     fun startScanning(listener: ScanListener): Boolean {
-        if (mLeScanner == null) {
-            if (!BluetoothHelper.supportBle(mAppContext)) {
-                Timber.tag(TAG).d("This device doesn't support BLE")
-                return false
-            }
-            val btAdapter = BluetoothHelper.getBluetoothAdapter(mAppContext)
-            if (btAdapter == null) {
-                Timber.tag(TAG).w("Failed to get BluetoothAdapter")
-                return false
-            }
-            if (!btAdapter.isEnabled) {
-                Timber.tag(TAG).w("Bluetooth not enabled")
+        if (leScanner == null) {
+            if (!BluetoothHelper.canDoBleOperations(appContext)) {
                 return false
             }
 
-            mLeScanner = btAdapter.bluetoothLeScanner
-            if (mLeScanner == null) {
+            leScanner = BluetoothHelper.getBluetoothAdapter(
+                appContext
+            )?.bluetoothLeScanner
+            if (leScanner == null) {
                 Timber.tag(TAG).w("Failed to get BLE scanner")
                 return false
             }
         }
 
-        if (hasNoPermissions(mAppContext)) {
+        if (hasNoPermissions(appContext)) {
             Timber.tag(TAG).w("No location permissions")
             return false
         }
 
         Timber.tag(TAG).d("Start scanning")
         return if (!isScanning) {
-            mAllScanResults.clear()
-            mLeScanner!!.startScan(buildScanFilters(), buildScanSettings(), mScanCallback)
+            allScanResults.clear()
+            Timber.tag(TAG).d("Scan filters: %s", scanFilters)
+            Timber.tag(TAG).d("Scan settings: %s", scanSetting)
+            leScanner!!.startScan(scanFilters, buildScanSettings(), scanCallback)
             isScanning = true
-            mListener = listener
-            mNextNumber = 1
+            this.listener = listener
+            nextNumber = 1
             true
         } else {
             Timber.tag(TAG).w("Scanning was already started")
@@ -80,47 +90,46 @@ class BleScanner private constructor() {
         }
     }
 
+    @MainThread
     fun stopScanning() {
         Timber.tag(TAG).d("Stop scanning")
         if (isScanning) {
-            mLeScanner!!.stopScan(mScanCallback)
-            mListener = null
+            leScanner!!.stopScan(scanCallback)
+            listener = null
             isScanning = false
         }
     }
 
     private fun buildScanSettings(): ScanSettings {
+        if (scanSetting != null) {
+            return scanSetting as ScanSettings
+        }
         return ScanSettings.Builder().build()
     }
 
-    private fun buildScanFilters(): List<ScanFilter> {
-//        filters.add(new ScanFilter.Builder()
-        //                .setDeviceAddress("41:B0:87:14:EB:B1")
-        //                .build());
-        //        filters.add(new ScanFilter.Builder()
-        //                .setDeviceName("iPhone 5s")
-        //                .build());
-        //        filters.add(new ScanFilter.Builder()
-        //                .setServiceUuid(ParcelUuid.fromString("735dc4fa-348e-11e7-a919-92ebcb67fe33"))
-        //                .build());
-        return ArrayList()
-    }
-
     private fun onDeviceFound(@NonNull result: ScanResult, tag: String) {
+        logScanResult(result, tag)
+        if (onlyNamedDevices && result.device.name == null) {
+            return // skip "UNKNOWN" devices
+        }
+
         val btAddress = result.device.address
-        var item: DeviceInfo? = mAllScanResults[btAddress]
+        var item: DeviceInfo? = allScanResults[btAddress]
         val newDevice = item == null
         if (!newDevice) {
             item!!.scanResult = result
             item.foundCount++
         } else {
-            item = DeviceInfo(mNextNumber++, btAddress, result)
-            mAllScanResults[btAddress] = item
+            item = DeviceInfo(
+                nextNumber++,
+                btAddress,
+                result
+            )
+            allScanResults[btAddress] = item
         }
-        logScanResult(result, tag)
-        Timber.tag(TAG).d("Total scan results: %d", mAllScanResults.size)
-        if (mListener != null) {
-            mListener!!.onDeviceFound(item, newDevice)
+        Timber.tag(TAG).d("Total scan results: %d", allScanResults.size)
+        if (listener != null) {
+            listener!!.onDeviceFound(item, newDevice)
         }
     }
 
@@ -171,14 +180,16 @@ class BleScanner private constructor() {
         }
 
         fun requestPermsForBleScan(
-            @NonNull activity: Activity, requestCode: Int,
+            @NonNull activity: Activity,
+            requestCode: Int,
             @NonNull callback: PermissionCallback
         ) {
             Timber.tag(TAG).d("Request perms for BLE scan")
             val params = PermissionRequestParams()
             params.requestCode = requestCode
-            params.permissions = BLE_SCAN_PERMS
-            params.rationaleContent = activity.getString(R.string.ble_scan_perm_rationale)
+            params.permissions =
+                    BLE_SCAN_PERMS
+            params.rationaleContent = activity.getString(string.ble_scan_perm_rationale)
             params.callback = callback
             PermissionUtils.requestPermissions(activity, params)
         }

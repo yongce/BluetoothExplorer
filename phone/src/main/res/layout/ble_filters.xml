@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.flexbox.FlexboxLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/filters"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:flexWrap="wrap"
+    app:justifyContent="space_between">
+    <RadioButton
+        android:id="@+id/filter_all"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ble_filter_all" />
+    <RadioButton
+        android:id="@+id/filter_magic_ww"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ble_filter_magic_ww" />
+    <RadioButton
+        android:id="@+id/filter_magic_future"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ble_filter_magic_future" />
+    <RadioButton
+        android:id="@+id/filter_magic_radio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ble_filter_magic_radio" />
+    <RadioButton
+        android:id="@+id/filter_time_service"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ble_filter_time_service" />
+</com.google.android.flexbox.FlexboxLayout>

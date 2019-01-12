@@ -1,4 +1,4 @@
-package me.ycdev.android.demo.ble.common
+package me.ycdev.android.demo.ble.common.client
 
 import android.bluetooth.le.ScanResult
 

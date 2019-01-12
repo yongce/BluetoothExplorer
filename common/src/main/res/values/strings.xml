@@ -3,11 +3,38 @@
     <string name="ble_scan_perm_rationale">Location permission is required to scan the BLE devices.</string>
 
     <string name="ble_scanner">BLE Scanner</string>
-    <string name="ble_status_scanning">Scanning… (%d devices found)</string>
-    <string name="ble_status_scanning_done">Scanning done (%d devices found)</string>
+    <string name="ble_status_init">Ready to go</string>
+    <string name="ble_status_scanning">Scanning for \"%1$s\" (%2$d devices found)</string>
+    <string name="ble_status_scanning_done">Scanning done (%1$d devices found)</string>
     <string name="ble_scan_start">Scan</string>
     <string name="ble_scan_stop">Stop</string>
     <string name="ble_unknown_device">unknown</string>
+    <string name="ble_only_named_devices">Only named devices</string>
+    <string name="ble_filter_all">All</string>
+    <string name="ble_filter_magic_ww">Magic WW</string>
+    <string name="ble_filter_magic_future">Magic Future</string>
+    <string name="ble_filter_magic_radio">Magic Radio</string>
+    <string name="ble_filter_time_service">Time Service</string>
 
     <string name="ble_advertiser">BLE Advertiser</string>
+    <string name="ble_advertiser_start">Start</string>
+    <string name="ble_advertiser_stop">Stop</string>
+    <string name="ble_status_advertise_initiated">Started for \"%1$s\"</string>
+    <string name="ble_status_advertise_broadcasting">Advertise broadcasting…</string>
+    <string name="ble_status_advertise_error">Failed to advertise (error: %1$s)</string>
+    <string name="ble_status_advertise_finished">Stopped</string>
+
+    <string name="ble_client">BLE Client</string>
+    <string name="ble_client_connect">Connect</string>
+    <string name="ble_client_disconnect">Disconnect</string>
+    <string name="ble_client_pair">Pair</string>
+    <string name="ble_status_client_connecting">Connecting to %1$s (%2$s)</string>
+    <string name="ble_status_client_state_changed">State changed: %1$s</string>
+    <string name="ble_status_client_pairing">Pairing to %1$s (%2$s)</string>
+    <string name="ble_status_client_pair_failed">Failed to pair</string>
+    <string name="ble_status_client_pair_state_changed">%1$s, %2$s (%3$s)</string>
+
+    <string name="ble_paired_viewer">Paired Devices</string>
+    <string name="ble_paired_viewer_refresh">Refresh</string>
+    <string name="ble_paired_viewer_status">%1$s There are %2$s bonded devices</string>
 </resources>

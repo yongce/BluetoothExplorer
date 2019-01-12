@@ -2,18 +2,18 @@ package me.ycdev.android.demo.ble
 
 import android.content.Intent
 import android.os.Bundle
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.navigation.NavigationView
-import com.google.android.material.snackbar.Snackbar
-import androidx.core.view.GravityCompat
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -39,13 +39,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val navigationView = findViewById<NavigationView>(R.id.nav_view)
         navigationView.setNavigationItemSelectedListener(this)
 
+        findViewById<View>(R.id.ble_advertiser).setOnClickListener {
+            val intent = Intent(this, AdvertiserActivity::class.java)
+            startActivity(intent)
+        }
+
         findViewById<View>(R.id.ble_scanner).setOnClickListener {
             val intent = Intent(this, ScannerActivity::class.java)
             startActivity(intent)
         }
 
-        findViewById<View>(R.id.ble_advertiser).setOnClickListener {
-            val intent = Intent(this, AdvertiserActivity::class.java)
+        findViewById<View>(R.id.paired_devices).setOnClickListener {
+            val intent = Intent(this, PairedDevicesActivity::class.java)
             startActivity(intent)
         }
     }
@@ -71,7 +76,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // as you specify a parent activity in AndroidManifest.xml.
         val id = item.itemId
 
-
         if (id == R.id.action_settings) {
             Toast.makeText(
                 this, application.getString(R.string.action_settings),
@@ -92,19 +96,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 // Handle the camera action
             }
             R.id.nav_gallery -> {
-
             }
             R.id.nav_slideshow -> {
-
             }
             R.id.nav_manage -> {
-
             }
             R.id.nav_share -> {
-
             }
             R.id.nav_send -> {
-
             }
         }
 

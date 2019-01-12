@@ -10,22 +10,30 @@
     tools:showIn="@layout/app_bar_main">
 
     <Button
-        android:id="@+id/ble_scanner"
+        android:id="@+id/ble_advertiser"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:layout_marginTop="10dp"
-        android:text="@string/ble_scanner"
+        android:text="@string/ble_advertiser"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/ble_advertiser"
+        android:id="@+id/ble_scanner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="@string/ble_advertiser"
+        android:text="@string/ble_scanner"
+        app:layout_constraintStart_toStartOf="@id/ble_advertiser"
+        app:layout_constraintTop_toBottomOf="@id/ble_advertiser" />
+
+    <Button
+        android:id="@+id/paired_devices"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/ble_paired_viewer"
         app:layout_constraintStart_toStartOf="@id/ble_scanner"
         app:layout_constraintTop_toBottomOf="@id/ble_scanner" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

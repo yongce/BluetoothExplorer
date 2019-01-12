@@ -5,21 +5,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".AdvertiserActivity"
-    tools:showIn="@layout/activity_advertiser">
-
-    <!-- Filters chain -->
-    <include layout="@layout/ble_filters" />
+    tools:context=".BleClientActivity"
+    tools:showIn="@layout/activity_ble_client">
 
     <Button
-        android:id="@+id/advertise_btn"
+        android:id="@+id/connect_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:layout_marginTop="10dp"
-        android:text="@string/ble_advertiser_start"
+        android:text="@string/ble_client_connect"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/filters" />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/pair_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:text="@string/ble_client_pair"
+        app:layout_constraintStart_toEndOf="@id/connect_btn"
+        app:layout_constraintTop_toTopOf="@id/connect_btn" />
 
     <TextView
         android:id="@+id/status"
@@ -27,7 +33,7 @@
         android:layout_height="0dp"
         android:layout_margin="10dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/advertise_btn"
+        app:layout_constraintTop_toBottomOf="@id/connect_btn"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

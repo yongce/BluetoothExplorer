@@ -24,8 +24,8 @@
         </activity>
 
         <activity
-            android:name=".ScannerActivity"
-            android:label="@string/ble_scanner"
+            android:name=".AdvertiserActivity"
+            android:label="@string/ble_advertiser"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -33,8 +33,25 @@
         </activity>
 
         <activity
-            android:name=".AdvertiserActivity"
-            android:label="@string/ble_advertiser"
+            android:name=".ScannerActivity"
+            android:label="@string/ble_scanner"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        <activity
+            android:name=".BleClientActivity"
+            android:label="@string/ble_client"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ScannerActivity" />
+        </activity>
+
+        <activity
+            android:name=".PairedDevicesActivity"
+            android:label="@string/ble_paired_viewer"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
