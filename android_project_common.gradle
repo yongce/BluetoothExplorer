@@ -61,7 +61,7 @@ ext {
             'wearableSupport'  : "2.3.0",
 
             // infrastructure
-            'butterknife'      : "9.0.0-rc2",
+            'butterknife'      : "10.0.0",
             'timber'           : "4.7.1",
             'guava'            : "23.5-android",
 
