@@ -1,4 +1,4 @@
-package me.ycdev.android.demo.ble.common.client
+package me.ycdev.android.ble.common.client
 
 enum class ClientState {
     CONNECTING,

@@ -1,4 +1,4 @@
-package me.ycdev.android.demo.ble.common.server
+package me.ycdev.android.ble.common.server
 
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
@@ -6,7 +6,7 @@ import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import androidx.annotation.MainThread
-import me.ycdev.android.demo.ble.common.BluetoothHelper
+import me.ycdev.android.ble.common.BluetoothHelper
 import timber.log.Timber
 
 class BleAdvertiserSimple(context: Context) : BleAdvertiser {

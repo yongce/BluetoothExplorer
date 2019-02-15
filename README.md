@@ -6,13 +6,14 @@
 
 调试设备：
 
-- Client：Mi 5S，MIUI 10.1，Android 8.0
-- Server：Nexus 5X，Android 8.1
+- Client/Server：Mi 5S，MIUI 10.2，Android 8.0
+- Server/Client：Nexus 5X，Android 8.1
 
 ### 扫描BLE设备
 
-BLE协议为了保护用户隐私，所有BLE设备暴露出去的device address都是一个随机地址，会定期变化（一般10分钟左右）。
+BLE协议为了保护用户隐私，所有BLE设备暴露出去的device address都是一个随机地址，会定期变化（一般15分钟左右，叠加一个随机值）。
 代码是无法获取BLE设备的真实蓝牙地址，也无法获取自己的随机device address。
+参考 [Bluetooth Technology Protecting Your Privacy][ble_privacy]
 
 在通过 android.bluetooth.le.BluetoothLeAdvertiser#startAdvertising() 发送广播时，会立即更新当前设备的device address（即每次调用都不一样）。
 这点，可以通过 android.bluetooth.le.BluetoothLeScanner() 的扫描结果观察到。
@@ -50,6 +51,13 @@ BLE协议为了保护用户隐私，所有BLE设备暴露出去的device address
 
 由于BLE设备的device address会经常变化，可能会导致一段时间后，无法再恢复连接。需要重新进行BLE扫描，用新的device address来连接。
 
+
+### BLE数据处理
+
+在 BluetoothGattCallback#onCharacteristicChanged() 回调中，需要即时处理 BluetoothGattCharacteristic 对象中的数据。
+否则，其中的数据可能会被后面的数据更新掉。例如，如果想异步处理收到的数据，则需要先从 BluetoothGattCharacteristic 对象中取出数据，
+再进行异步处理。
+
 ## 一些错误
 
 ### onClientRegistered - status=133
@@ -61,3 +69,21 @@ BLE协议为了保护用户隐私，所有BLE设备暴露出去的device address
 ### onClientConnectionState - status=133
 
 如果设备未配对，进行BLE连接时总是出现此错误，原因可能是目标设备的device address改变了，需要重新进行BLE扫描，然后再尝试连接。
+
+## 16/32位UUID
+
+由于标准的128位UUID有16字节，会占用较多数据空间（例如，BLE GATT advertise数据包总共才31字节）。
+为此，SIG添加了两类特殊的UUID格式：16位和32位UUID（所有SIG定义的标准蓝牙UUID都采用这类特殊格式）。
+并且，SIG定义了16位/32位UUID与128位UUID的换算关系：
+
+* 16位UUID： 0000xxxx-0000-1000-8000-00805f9b34fb
+* 32位UUID： xxxxxxxx-0000-1000-8000-00805f9b34fb
+
+参见 [Service Discovery][bluetooth_service_discovery]
+
+目前仅分配了16位UUID。SIG会员企业也可以花钱申请16位UUID，参见 [16 Bit UUIDs For Members][bluetooth_uuid_16bits]
+
+
+[ble_privacy]: https://blog.bluetooth.com/bluetooth-technology-protecting-your-privacy
+[bluetooth_service_discovery]: https://www.bluetooth.com/specifications/assigned-numbers/service-discovery
+[bluetooth_uuid_16bits]: https://www.bluetooth.com/specifications/assigned-numbers/16-bit-uuids-for-members

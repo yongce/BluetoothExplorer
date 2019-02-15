@@ -10,7 +10,6 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
-import androidx.annotation.MainThread
 import androidx.annotation.StringRes
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
@@ -18,9 +17,12 @@ import androidx.appcompat.widget.Toolbar
 import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
-import me.ycdev.android.demo.ble.common.BluetoothHelper
-import me.ycdev.android.demo.ble.common.client.BleGattClient
-import me.ycdev.android.demo.ble.common.client.ClientState
+import me.ycdev.android.ble.common.BluetoothHelper
+import me.ycdev.android.ble.common.client.BleGattClientBase
+import me.ycdev.android.ble.common.client.BleGattClientSimple
+import me.ycdev.android.ble.common.client.ClientState
+import me.ycdev.android.ble.common.ext.MagicPingClient
+import me.ycdev.android.ble.common.ext.MagicRadioClient
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -35,10 +37,12 @@ class BleClientActivity : AppCompatActivity() {
     @BindView(R.id.status)
     internal lateinit var statusView: TextView
 
-    private lateinit var gattClient: BleGattClient
+    private lateinit var gattClient: BleGattClientBase
     private val gattCallback = MyCallback()
     private var receiver: BroadcastReceiver? = null
+
     private var device: BluetoothDevice? = null
+    private var clientType = ClientType.DEFAULT
 
     private val timestampFormatter = SimpleDateFormat("dd-HH:mm:ss", Locale.US)
 
@@ -57,8 +61,15 @@ class BleClientActivity : AppCompatActivity() {
             finish()
             return
         }
+        if (intent.hasExtra(EXTRA_CLIENT_TYPE)) {
+            clientType = intent.getIntExtra(EXTRA_CLIENT_TYPE, ClientType.DEFAULT)
+        }
 
-        gattClient = BleGattClient(this)
+        gattClient = when (clientType) {
+            ClientType.MAGIC_PING -> MagicPingClient(this)
+            ClientType.MAGIC_RADIO -> MagicRadioClient(this)
+            else -> BleGattClientSimple(this)
+        }
 
         initContentViews()
     }
@@ -169,16 +180,24 @@ class BleClientActivity : AppCompatActivity() {
         }
     }
 
-    private inner class MyCallback : BleGattClient.Callback {
-        @MainThread
-        override fun onStateChanged(newState: ClientState) {
+    private inner class MyCallback : BleGattClientBase.Callback {
+        override fun onStateChanged(device: BluetoothDevice, newState: ClientState) {
             addStatusLog(R.string.ble_status_client_state_changed, newState)
             updateContentViews()
         }
 
-        override fun onServicesDiscovered(services: List<BluetoothGattService>) {
-            TODO("not implemented") // To change body of created functions use File | Settings | File Templates.
+        override fun onServicesDiscovered(
+            device: BluetoothDevice,
+            services: List<BluetoothGattService>
+        ) {
+            addStatusLog(R.string.ble_status_client_service_search_complete)
         }
+    }
+
+    object ClientType {
+        const val DEFAULT = 1
+        const val MAGIC_PING = 2
+        const val MAGIC_RADIO = 3
     }
 
     companion object {
@@ -187,5 +206,6 @@ class BleClientActivity : AppCompatActivity() {
         private const val RC_BT_ENABLE = 101
 
         const val EXTRA_DEVICE = "extra.device"
+        const val EXTRA_CLIENT_TYPE = "extra.client_type"
     }
 }

@@ -1,4 +1,4 @@
-package me.ycdev.android.demo.ble.common
+package me.ycdev.android.ble.common
 
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import me.ycdev.android.lib.common.utils.EncodingUtils
 import timber.log.Timber
 import java.util.Locale
 
@@ -20,7 +21,7 @@ object BluetoothHelper {
     }
 
     fun getBluetoothManager(context: Context): BluetoothManager? {
-        return context.getSystemService<BluetoothManager>(BluetoothManager::class.java)
+        return context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     }
 
     fun getBluetoothAdapter(context: Context): BluetoothAdapter? {
@@ -76,7 +77,7 @@ object BluetoothHelper {
         }
     }
 
-    fun gattConnectionStateStr(state: Int): String {
+    fun connectionStateStr(state: Int): String {
         return when (state) {
             BluetoothProfile.STATE_DISCONNECTED -> "DISCONNECTED"
             BluetoothProfile.STATE_CONNECTING -> "CONNECTING"
@@ -93,5 +94,21 @@ object BluetoothHelper {
             BluetoothDevice.BOND_BONDED -> "BOND_BONDED"
             else -> "UNKNOWN-$state"
         }
+    }
+
+    fun addressStr(address: ByteArray): String {
+        if (address.size != 6) {
+            throw IllegalArgumentException("Bad address length: ${address.size}")
+        }
+
+        return address.joinToString(separator = ":", transform = { data -> String.format("%02X", data) })
+    }
+
+    fun parseAddressStr(address: String): ByteArray {
+        if (address.length != 17) {
+            throw IllegalArgumentException("Bad address: $address")
+        }
+
+        return EncodingUtils.fromHexString(address.replace(":", ""))
     }
 }

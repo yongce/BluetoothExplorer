@@ -18,12 +18,13 @@ import androidx.appcompat.widget.Toolbar
 import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
-import me.ycdev.android.demo.ble.common.BleConstants
-import me.ycdev.android.demo.ble.common.BluetoothHelper
-import me.ycdev.android.demo.ble.common.server.BleAdvertiser
-import me.ycdev.android.demo.ble.common.server.BleAdvertiserSimple
-import me.ycdev.android.demo.ble.common.server.MagicRadioGattServer
-import me.ycdev.android.demo.ble.common.server.TimeServiceGattServer
+import me.ycdev.android.ble.common.BluetoothHelper
+import me.ycdev.android.ble.common.server.BleAdvertiser
+import me.ycdev.android.ble.common.server.BleAdvertiserSimple
+import me.ycdev.android.ble.common.ext.MagicPingServer
+import me.ycdev.android.ble.common.ext.MagicRadioServer
+import me.ycdev.android.ble.common.ext.TimeServiceServer
+import me.ycdev.android.demo.ble.common.BleDemoConstants
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -59,7 +60,7 @@ class AdvertiserActivity : AppCompatActivity() {
 
         // Hide the "all" option
         findViewById<View>(R.id.filter_all).visibility = View.GONE
-        selectedFilterCheckBox = findViewById(R.id.filter_magic_future)
+        selectedFilterCheckBox = findViewById(R.id.filter_magic_ping)
         selectedFilterCheckBox.isChecked = true
 
         addStatusLog(getString(R.string.ble_status_init))
@@ -93,7 +94,7 @@ class AdvertiserActivity : AppCompatActivity() {
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
             .build()
         val data = AdvertiseData.Builder()
-            .addServiceUuid(ParcelUuid(BleConstants.SERVICE_MAGIC_WW))
+            .addServiceUuid(ParcelUuid(BleDemoConstants.SERVICE_MAGIC_WW))
             .setIncludeDeviceName(true)
             .build()
 
@@ -104,31 +105,18 @@ class AdvertiserActivity : AppCompatActivity() {
         bleAdvertiser!!.start()
     }
 
-    private fun advertiseForMagicFuture() {
-        val settings = AdvertiseSettings.Builder()
-            .setTimeout(0)
-            .setConnectable(true)
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
-            .build()
-        val data = AdvertiseData.Builder()
-            .addServiceUuid(ParcelUuid(BleConstants.SERVICE_MAGIC_FUTURE))
-            .setIncludeDeviceName(true)
-            .build()
-
-        bleAdvertiser = BleAdvertiserSimple(this)
-            .setSettings(settings)
-            .setData(data)
-            .setCallback(advertiserCallback)
+    private fun advertiseForMagicPing() {
+        bleAdvertiser = MagicPingServer(this)
         bleAdvertiser!!.start()
     }
 
     private fun advertiseForMagicRadio() {
-        bleAdvertiser = MagicRadioGattServer(this)
+        bleAdvertiser = MagicRadioServer(this)
         bleAdvertiser!!.start()
     }
 
     private fun advertiseForTimeService() {
-        bleAdvertiser = TimeServiceGattServer(this)
+        bleAdvertiser = TimeServiceServer(this)
         bleAdvertiser!!.start()
     }
 
@@ -136,7 +124,7 @@ class AdvertiserActivity : AppCompatActivity() {
         addStatusLog(R.string.ble_status_advertise_initiated, selectedFilterCheckBox.text)
         when (selectedFilterCheckBox.id) {
             R.id.filter_magic_ww -> advertiseForMagicWw()
-            R.id.filter_magic_future -> advertiseForMagicFuture()
+            R.id.filter_magic_ping -> advertiseForMagicPing()
             R.id.filter_magic_radio -> advertiseForMagicRadio()
             R.id.filter_time_service -> advertiseForTimeService()
         }
@@ -167,7 +155,7 @@ class AdvertiserActivity : AppCompatActivity() {
 
     @OnClick(
         R.id.filter_magic_ww,
-        R.id.filter_magic_future,
+        R.id.filter_magic_ping,
         R.id.filter_magic_radio,
         R.id.filter_time_service
     )

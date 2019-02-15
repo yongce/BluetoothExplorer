@@ -1,4 +1,4 @@
-package me.ycdev.android.demo.ble.common.server
+package me.ycdev.android.ble.common.server
 
 interface BleAdvertiser {
     fun isAdvertising(): Boolean

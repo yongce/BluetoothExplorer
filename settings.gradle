@@ -1,1 +1,1 @@
-include ':common', ':phone', ':wear'
+include ':bleLib', ':common', ':phone', ':wear'

@@ -23,7 +23,7 @@ import androidx.recyclerview.widget.RecyclerView
 import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
-import me.ycdev.android.demo.ble.common.BluetoothHelper
+import me.ycdev.android.ble.common.BluetoothHelper
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
 import java.util.Objects

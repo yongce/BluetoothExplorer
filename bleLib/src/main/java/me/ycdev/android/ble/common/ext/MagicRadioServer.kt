@@ -1,4 +1,4 @@
-package me.ycdev.android.demo.ble.common.server
+package me.ycdev.android.ble.common.ext
 
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattServer
@@ -6,12 +6,13 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import android.os.ParcelUuid
+import me.ycdev.android.ble.common.server.BleGattServerBase
 import me.ycdev.android.lib.common.async.HandlerExecutor
 import me.ycdev.android.lib.common.async.TaskScheduler
 import me.ycdev.android.lib.common.type.IntegerHolder
 import timber.log.Timber
 
-class MagicRadioGattServer(context: Context) : BleGattServerBase(TAG, context) {
+class MagicRadioServer(context: Context) : BleGattServerBase(TAG, context) {
     private val messageId = IntegerHolder(0)
     private val taskScheduler = TaskScheduler(HandlerExecutor.withMainLooper(), TAG)
 
@@ -60,23 +61,24 @@ class MagicRadioGattServer(context: Context) : BleGattServerBase(TAG, context) {
 
     override fun onStart() {
         taskScheduler.schedulePeriod({
-            val fmOne = gattServer?.getService(MagicRadioProfile.RADIO_SERVICE)
-                ?.getCharacteristic(MagicRadioProfile.FM_ONE_CHARACTERISTIC)
-            fmOne?.value = getFmOneData()
+            val fmOneData = getFmOneData()
+            val fmTwoData = getFmTwoData()
 
-            val fmTwo = gattServer?.getService(MagicRadioProfile.RADIO_SERVICE)
-                ?.getCharacteristic(MagicRadioProfile.FM_TWO_CHARACTERISTIC)
-            fmTwo?.value = getFmTwoData()
-
-            notifyRegisteredDevices {
-                if (fmOne != null) {
-                    Timber.tag(TAG).d("Publish: %s", String(fmOne.value))
-                    gattServer?.notifyCharacteristicChanged(it, fmOne, false)
-                }
-                if (fmTwo != null) {
-                    Timber.tag(TAG).d("Publish: %s", String(fmTwo.value))
-                    gattServer?.notifyCharacteristicChanged(it, fmTwo, false)
-                }
+            peripheralHelper.notifyRegisteredDevices {
+                Timber.tag(TAG).d("Publish: %s", String(fmOneData))
+                peripheralHelper.sendData(
+                    it,
+                    MagicPingProfile.PING_SERVICE,
+                    MagicRadioProfile.FM_ONE_CHARACTERISTIC,
+                    fmOneData
+                )
+                Timber.tag(TAG).d("Publish: %s", String(fmTwoData))
+                peripheralHelper.sendData(
+                    it,
+                    MagicRadioProfile.RADIO_SERVICE,
+                    MagicRadioProfile.FM_TWO_CHARACTERISTIC,
+                    fmTwoData
+                )
             }
         }, 0, MESSAGES_INTERVAL)
     }
@@ -86,7 +88,7 @@ class MagicRadioGattServer(context: Context) : BleGattServerBase(TAG, context) {
     }
 
     companion object {
-        private const val TAG = "MagicRadioGattServer"
+        private const val TAG = "MagicRadioServer"
 
         private const val MESSAGES_INTERVAL = 1000 * 30L // 30 seconds
     }

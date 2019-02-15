@@ -1,4 +1,4 @@
-package me.ycdev.android.demo.ble.common.server
+package me.ycdev.android.ble.common.ext
 
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattServer
@@ -9,8 +9,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.ParcelUuid
+import me.ycdev.android.ble.common.server.BleGattServerBase
 
-class TimeServiceGattServer(context: Context) : BleGattServerBase(TAG, context.applicationContext) {
+class TimeServiceServer(context: Context) : BleGattServerBase(TAG, context) {
     /**
      * Listens for system clock events and triggers a notification to subscribers.
      */
@@ -27,7 +28,8 @@ class TimeServiceGattServer(context: Context) : BleGattServerBase(TAG, context.a
         }
     }
 
-    override fun getClientConfigDescriptorUuid() = TimeServiceProfile.CLIENT_CONFIG
+    override fun getClientConfigDescriptorUuid() =
+        TimeServiceProfile.CLIENT_CONFIG
 
     override fun addBleServices(gattServer: BluetoothGattServer): Boolean {
         return gattServer.addService(TimeServiceProfile.createTimeService())
@@ -50,6 +52,13 @@ class TimeServiceGattServer(context: Context) : BleGattServerBase(TAG, context.a
             .build()
     }
 
+    override fun onCharacteristicReadRequest(characteristic: BluetoothGattCharacteristic): ByteArray? {
+        return TimeServiceProfile.getExactTime(
+            System.currentTimeMillis(),
+            TimeServiceProfile.ADJUST_NONE
+        )
+    }
+
     override fun onStart() {
         // Register for system clock events
         val filter = IntentFilter().apply {
@@ -57,27 +66,26 @@ class TimeServiceGattServer(context: Context) : BleGattServerBase(TAG, context.a
             addAction(Intent.ACTION_TIME_CHANGED)
             addAction(Intent.ACTION_TIMEZONE_CHANGED)
         }
-        appContext.registerReceiver(timeReceiver, filter)
+        context.registerReceiver(timeReceiver, filter)
     }
 
     override fun onStop() {
-        appContext.unregisterReceiver(timeReceiver)
-    }
-
-    override fun onCharacteristicReadRequest(characteristic: BluetoothGattCharacteristic): ByteArray? {
-        return TimeServiceProfile.getExactTime(System.currentTimeMillis(), TimeServiceProfile.ADJUST_NONE)
+        context.unregisterReceiver(timeReceiver)
     }
 
     private fun notifyTimeChange(time: Long, adjustReason: Byte) {
         val exactTime = TimeServiceProfile.getExactTime(time, adjustReason)
-        val timeCharacteristic = gattServer
-            ?.getService(TimeServiceProfile.TIME_SERVICE)
-            ?.getCharacteristic(TimeServiceProfile.CURRENT_TIME)
-        timeCharacteristic?.value = exactTime
-        notifyRegisteredDevices { gattServer?.notifyCharacteristicChanged(it, timeCharacteristic, false) }
+        peripheralHelper.notifyRegisteredDevices {
+            peripheralHelper.sendData(
+                it,
+                TimeServiceProfile.TIME_SERVICE,
+                TimeServiceProfile.CURRENT_TIME,
+                exactTime
+            )
+        }
     }
 
     companion object {
-        private const val TAG = "TimeServiceGattServer"
+        private const val TAG = "TimeServiceServer"
     }
 }

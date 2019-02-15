@@ -10,8 +10,6 @@ android {
 }
 
 dependencies {
-    api project(':bleLib')
-
     implementation deps.kotlin.stdlib
     implementation deps.androidx.appcompat
     implementation deps.androidx.design
