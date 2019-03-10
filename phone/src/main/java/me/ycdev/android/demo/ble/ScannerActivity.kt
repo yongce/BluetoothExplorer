@@ -20,6 +20,7 @@ import androidx.annotation.Nullable
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.util.forEach
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -28,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView
 import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
+import me.ycdev.android.ble.common.BleAdvertiseData
 import me.ycdev.android.ble.common.BluetoothHelper
 import me.ycdev.android.ble.common.client.BleScanner
 import me.ycdev.android.ble.common.ext.MagicPingProfile
@@ -39,6 +41,7 @@ import me.ycdev.android.demo.ble.common.BleDemoConstants
 import me.ycdev.android.demo.ble.common.BleDemoHelper
 import me.ycdev.android.lib.common.perms.PermissionCallback
 import me.ycdev.android.lib.common.perms.PermissionUtils
+import me.ycdev.android.lib.common.utils.EncodingUtils.encodeWithHex
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Collections
@@ -157,7 +160,9 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         R.id.filter_magic_ww,
         R.id.filter_magic_ping,
         R.id.filter_magic_radio,
-        R.id.filter_time_service
+        R.id.filter_time_service,
+        R.id.filter_gfp_service,
+        R.id.filter_mfp_service
     )
     fun onCheckboxClick(v: View) {
         if (v != selectedFilterCheckBox) {
@@ -172,7 +177,7 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         bleScanner.stopScanning()
     }
 
-    override fun onDeviceFound(@NonNull device: ScanResult) {
+    override fun onDeviceFound(@NonNull result: ScanResult) {
         val devices = bleScanner.devices
         Collections.sort(devices, deviceComparator)
         adapter.submitList(devices)
@@ -218,6 +223,26 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         return filters
     }
 
+    private fun buildScanFiltersForGfpService(): List<ScanFilter> {
+        val filters = arrayListOf<ScanFilter>()
+        filters.add(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(BleDemoConstants.SERVICE_GFP))
+                .build()
+        )
+        return filters
+    }
+
+    private fun buildScanFiltersForMfpService(): List<ScanFilter> {
+        val filters = arrayListOf<ScanFilter>()
+        filters.add(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(BleDemoConstants.SERVICE_MFP))
+                .build()
+        )
+        return filters
+    }
+
     private fun setupScanFilter() {
         when (selectedFilterCheckBox.id) {
             R.id.filter_all -> bleScanner.setScanFilters(null)
@@ -225,6 +250,8 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
             R.id.filter_magic_ping -> bleScanner.setScanFilters(buildScanFiltersForMagicPing())
             R.id.filter_magic_radio -> bleScanner.setScanFilters(buildScanFiltersForMagicRadio())
             R.id.filter_time_service -> bleScanner.setScanFilters(buildScanFiltersForTimeService())
+            R.id.filter_gfp_service -> bleScanner.setScanFilters(buildScanFiltersForGfpService())
+            R.id.filter_mfp_service -> bleScanner.setScanFilters(buildScanFiltersForMfpService())
             else -> throw RuntimeException("Unknown filter")
         }
 
@@ -278,12 +305,13 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         ListAdapter<ScanResult, MyViewHolder>(MyDiffItemCallback()) {
         private val timestampFormatter = SimpleDateFormat("dd-HH:mm:ss", Locale.US)
 
-        private val mInflater: LayoutInflater = LayoutInflater.from(context)
-        private val mUnknownDeviceName: String = context.getString(R.string.ble_unknown_device)
+        private val inflater: LayoutInflater = LayoutInflater.from(context)
+        private val unknownDeviceName: String = context.getString(R.string.ble_unknown_device)
+        private val noScanRecordTips: String = context.getString(R.string.ble_no_scan_record)
 
         @NonNull
         override fun onCreateViewHolder(@NonNull parent: ViewGroup, viewType: Int): MyViewHolder {
-            val itemView = mInflater.inflate(R.layout.devices_list_item, parent, false)
+            val itemView = inflater.inflate(R.layout.devices_list_item, parent, false)
             return MyViewHolder(itemView)
         }
 
@@ -293,7 +321,7 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
 
             var name = btDevice.name
             if (TextUtils.isEmpty(name)) {
-                name = mUnknownDeviceName
+                name = unknownDeviceName
             }
             holder.nameView.text = String.format(
                 Locale.US, "%s",
@@ -305,11 +333,45 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
                     (SystemClock.elapsedRealtimeNanos() - item.timestampNanos) / 1000000
             holder.timestampView.text = timestampFormatter.format(Date(timestamp))
 
+            val scanRecord = item.scanRecord
+            if (scanRecord != null) {
+                val advertiseData = BleAdvertiseData.Parser().parse(scanRecord.bytes)
+                val sb = StringBuilder()
+                sb.append("ScanRecordRawData: ").append(encodeWithHex(scanRecord.bytes))
+                sb.append("\nPayload size: ").append(advertiseData.payloadSize)
+                if (scanRecord.advertiseFlags != -1) {
+                    sb.append("\nAdvertiseFlags: 0x").append(scanRecord.advertiseFlags.toString(16))
+                }
+                if (scanRecord.txPowerLevel != Int.MIN_VALUE) {
+                    sb.append("\nTxPowerLevel: ").append(scanRecord.txPowerLevel)
+                }
+                if (scanRecord.deviceName != null) {
+                    sb.append("\nDeviceName: ").append(scanRecord.deviceName)
+                }
+                if (scanRecord.serviceUuids != null) {
+                    sb.append(scanRecord.serviceUuids.joinToString("") { "\nService UUID: $it" })
+                }
+                for ((uuid, data) in scanRecord.serviceData) {
+                    sb.append("\nService with data, UUID: ").append(uuid)
+                        .append(", data: ").append(encodeWithHex(data))
+                }
+                scanRecord.manufacturerSpecificData.forEach { id, data ->
+                    sb.append("\nManufacturer ID: 0x").append(String.format("%04x", id))
+                        .append(", data: ").append(encodeWithHex(data))
+                }
+                Timber.tag(TAG).d("ScanRecordRawData: %s", encodeWithHex(scanRecord.bytes))
+
+                holder.advertiseDataView.text = sb.toString()
+            } else {
+                holder.advertiseDataView.text = noScanRecordTips
+            }
+
             holder.itemView.setOnClickListener {
                 // stop BLE scan first
                 bleScanner.stopScanning()
+                updateContentViews()
 
-                val intent: Intent = Intent(context, BleClientActivity::class.java)
+                val intent = Intent(context, BleClientActivity::class.java)
                 intent.putExtra(BleClientActivity.EXTRA_DEVICE, btDevice)
                 intent.putExtra(BleClientActivity.EXTRA_CLIENT_TYPE, getClientType())
                 context.startActivity(intent)
@@ -324,6 +386,8 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         internal lateinit var addressView: TextView
         @BindView(R.id.timestamp)
         internal lateinit var timestampView: TextView
+        @BindView(R.id.advertise_data)
+        internal lateinit var advertiseDataView: TextView
 
         init {
             ButterKnife.bind(this, itemView)

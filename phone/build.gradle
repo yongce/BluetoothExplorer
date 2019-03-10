@@ -26,6 +26,7 @@ dependencies {
     implementation project(':common')
 
     implementation deps.kotlin.stdlib
+    implementation deps.androidx.ktx
     implementation deps.androidx.appcompat
     implementation deps.androidx.design
     implementation deps.androidx.constraintLayout

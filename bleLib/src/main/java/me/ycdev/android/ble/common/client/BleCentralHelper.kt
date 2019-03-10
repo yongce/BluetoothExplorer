@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import android.os.Build
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
 import me.ycdev.android.ble.common.BleDebugConfigs
@@ -62,7 +63,13 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
         }
 
         this.device = device
-        gatt = device.connectGatt(context, false, gattCallback)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // The connect requesting will fail with the error "onClientConnectionState() - status=133"
+            // when use BluetoothDevice#TRANSPORT_AUTO and the remote device is Android N or higher version.
+            gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+        } else {
+            gatt = device.connectGatt(context, false, gattCallback)
+        }
         return gatt != null
     }
 

@@ -23,6 +23,7 @@ dependencies {
     testImplementation deps.test.hamcrestCore
     testImplementation deps.test.hamcrestLibrary
     testImplementation deps.test.mockitoCore
+    testImplementation deps.test.robolectric
     testImplementation deps.ycdev.androidTest
 
     // AndroidJUnitRunner and JUnit Rules

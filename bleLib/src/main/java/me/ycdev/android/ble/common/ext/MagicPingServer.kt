@@ -53,7 +53,7 @@ class MagicPingServer(context: Context) : BleGattServerBase(TAG, context) {
     }
 
     override fun onCharacteristicReadRequest(characteristic: BluetoothGattCharacteristic): ByteArray? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        TODO("not implemented") // To change body of created functions use File | Settings | File Templates.
     }
 
     override fun onIncomingData(

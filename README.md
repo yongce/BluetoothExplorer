@@ -70,6 +70,9 @@ BLE协议为了保护用户隐私，所有BLE设备暴露出去的device address
 
 如果设备未配对，进行BLE连接时总是出现此错误，原因可能是目标设备的device address改变了，需要重新进行BLE扫描，然后再尝试连接。
 
+如果remote device是Android N或者更高版本，也可能遇到这个问题。
+使用 BluetoothDevice.TRANSPORT_LE 参数调用 BluetoothDevice#connectGatt() 可解决此问题。
+
 ## 16/32位UUID
 
 由于标准的128位UUID有16字节，会占用较多数据空间（例如，BLE GATT advertise数据包总共才31字节）。

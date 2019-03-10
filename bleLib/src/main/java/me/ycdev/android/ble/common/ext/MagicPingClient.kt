@@ -13,7 +13,7 @@ import me.ycdev.android.lib.common.packets.TinyPacketsWorker
 import me.ycdev.android.lib.common.type.IntegerHolder
 import timber.log.Timber
 
-class MagicPingClient(context: Context) : BleGattClientBase(TAG, context), PacketsWorker.ParserCallback  {
+class MagicPingClient(context: Context) : BleGattClientBase(TAG, context), PacketsWorker.ParserCallback {
     private val packetsWorker = TinyPacketsWorker(this)
     private val messageId = IntegerHolder(0)
     private val taskScheduler = TaskScheduler(HandlerExecutor.withMainLooper(), TAG)

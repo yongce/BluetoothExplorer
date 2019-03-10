@@ -35,4 +35,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_magic_ww" />
+    <RadioButton
+        android:id="@+id/filter_gfp_service"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ble_filter_gfp_service" />
+    <RadioButton
+        android:id="@+id/filter_mfp_service"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ble_filter_mfp_service" />
 </com.google.android.flexbox.FlexboxLayout>

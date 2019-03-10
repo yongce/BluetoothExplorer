@@ -115,7 +115,8 @@ class BleClientActivity : AppCompatActivity() {
         val started = gattClient.isStarted()
         Timber.tag(TAG).d("BLE client is started: %s", started)
         if (!started) {
-            addStatusLog(R.string.ble_status_client_connecting, device!!.address, device!!.name)
+            val deviceName = device!!.name ?: getString(R.string.ble_unknown_device)
+            addStatusLog(R.string.ble_status_client_connecting, device!!.address, deviceName)
             gattClient.connect(device!!, gattCallback)
         } else {
             gattClient.close()
