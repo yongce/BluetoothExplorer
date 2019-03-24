@@ -1,17 +1,16 @@
 package me.ycdev.android.ble.common.ext
 
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothGattServer
+import android.bluetooth.BluetoothGattService
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import android.os.ParcelUuid
+import me.ycdev.android.ble.common.BleCharacteristicInfo
 import me.ycdev.android.ble.common.server.BleGattServerBase
 import me.ycdev.android.lib.common.packets.PacketsWorker
 import me.ycdev.android.lib.common.packets.TinyPacketsWorker
 import timber.log.Timber
-import java.util.UUID
 
 class MagicPingServer(context: Context) : BleGattServerBase(TAG, context) {
     private val packetsWorkerMapping = hashMapOf<BluetoothDevice, PacketsWorker>()
@@ -36,14 +35,11 @@ class MagicPingServer(context: Context) : BleGattServerBase(TAG, context) {
             .build()
     }
 
-    override fun addBleServices(gattServer: BluetoothGattServer): Boolean {
-        return gattServer.addService(MagicPingProfile.createService())
+    override fun createBleServices(): List<BluetoothGattService> {
+        return arrayListOf(MagicPingProfile.createService())
     }
 
-    override fun getPacketsWorker(
-        device: BluetoothDevice,
-        characteristicUuid: UUID
-    ): PacketsWorker {
+    private fun getPacketsWorker(device: BluetoothDevice): PacketsWorker {
         var packetsWorker = packetsWorkerMapping[device]
         if (packetsWorker == null) {
             packetsWorker = TinyPacketsWorker(MyParserCallback(device))
@@ -52,17 +48,13 @@ class MagicPingServer(context: Context) : BleGattServerBase(TAG, context) {
         return packetsWorker
     }
 
-    override fun onCharacteristicReadRequest(characteristic: BluetoothGattCharacteristic): ByteArray? {
-        TODO("not implemented") // To change body of created functions use File | Settings | File Templates.
-    }
-
     override fun onIncomingData(
         device: BluetoothDevice,
-        characteristicUuid: UUID,
+        characteristic: BleCharacteristicInfo,
         value: ByteArray
     ) {
-        super.onIncomingData(device, characteristicUuid, value)
-        getPacketsWorker(device, characteristicUuid).parsePackets(value)
+        super.onIncomingData(device, characteristic, value)
+        getPacketsWorker(device).parsePackets(value)
     }
 
     inner class MyParserCallback(val device: BluetoothDevice) : PacketsWorker.ParserCallback {

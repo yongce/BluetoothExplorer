@@ -1,7 +1,7 @@
 package me.ycdev.android.ble.common.ext
 
 import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothGattServer
+import android.bluetooth.BluetoothGattService
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
@@ -33,8 +33,8 @@ class MagicRadioServer(context: Context) : BleGattServerBase(TAG, context) {
             .build()
     }
 
-    override fun addBleServices(gattServer: BluetoothGattServer): Boolean {
-        return gattServer.addService(MagicRadioProfile.createService())
+    override fun createBleServices(): List<BluetoothGattService> {
+        return arrayListOf(MagicRadioProfile.createService())
     }
 
     override fun notifyAllConnectedDevices(): Boolean {
@@ -59,32 +59,44 @@ class MagicRadioServer(context: Context) : BleGattServerBase(TAG, context) {
         }
     }
 
-    override fun onStart() {
-        taskScheduler.schedulePeriod({
-            val fmOneData = getFmOneData()
-            val fmTwoData = getFmTwoData()
+    override fun start(resultCallback: ((Boolean) -> Unit)?) {
+        super.start { success ->
+            if (success) {
+                taskScheduler.schedulePeriod({
+                    val fmOneData = getFmOneData()
+                    val fmTwoData = getFmTwoData()
 
-            peripheralHelper.notifyRegisteredDevices {
-                Timber.tag(TAG).d("Publish: %s", String(fmOneData))
-                peripheralHelper.sendData(
-                    it,
-                    MagicPingProfile.PING_SERVICE,
-                    MagicRadioProfile.FM_ONE_CHARACTERISTIC,
-                    fmOneData
-                )
-                Timber.tag(TAG).d("Publish: %s", String(fmTwoData))
-                peripheralHelper.sendData(
-                    it,
-                    MagicRadioProfile.RADIO_SERVICE,
-                    MagicRadioProfile.FM_TWO_CHARACTERISTIC,
-                    fmTwoData
-                )
+                    notifyRegisteredDevices {
+                        Timber.tag(TAG).d("Publish: %s", String(fmOneData))
+                        sendData(
+                            it,
+                            MagicPingProfile.PING_SERVICE,
+                            MagicRadioProfile.FM_ONE_CHARACTERISTIC,
+                            fmOneData
+                        )
+                        Timber.tag(TAG).d("Publish: %s", String(fmTwoData))
+                        sendData(
+                            it,
+                            MagicRadioProfile.RADIO_SERVICE,
+                            MagicRadioProfile.FM_TWO_CHARACTERISTIC,
+                            fmTwoData
+                        )
+                    }
+                }, 0, MESSAGES_INTERVAL)
             }
-        }, 0, MESSAGES_INTERVAL)
+            if (resultCallback != null) {
+                resultCallback(success)
+            }
+        }
     }
 
-    override fun onStop() {
-        taskScheduler.clear()
+    override fun stop(resultCallback: (() -> Unit)?) {
+        super.stop {
+            taskScheduler.clear()
+            if (resultCallback != null) {
+                resultCallback()
+            }
+        }
     }
 
     companion object {

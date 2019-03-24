@@ -2,19 +2,21 @@ package me.ycdev.android.ble.common.client
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.Context
 import androidx.annotation.CallSuper
 import androidx.annotation.MainThread
-import me.ycdev.android.ble.common.BleDebugConfigs
-import me.ycdev.android.lib.common.utils.EncodingUtils
+import me.ycdev.android.ble.common.BleCharacteristicInfo
+import me.ycdev.android.ble.common.BleConfigs
+import me.ycdev.android.lib.common.utils.EncodingUtils.encodeWithHex
 import timber.log.Timber
 import java.util.UUID
 
-abstract class BleGattClientBase(val ownerTag: String, val context: Context) :
+abstract class BleGattClientBase(private val ownerTag: String, val context: Context) :
     BleCentralHelper.Contract {
 
-    protected val centralHelper = BleCentralHelper(context, this)
+    private val centralHelper = BleCentralHelper(context, this)
     private var callback: Callback? = null
 
     fun setOperationTimeout(timeoutMs: Long) {
@@ -37,8 +39,16 @@ abstract class BleGattClientBase(val ownerTag: String, val context: Context) :
 
     fun isConnected() = centralHelper.isConnected()
 
+    fun requestMtu(mtu: Int) = centralHelper.requestMtu(mtu)
+
+    fun readData(serviceUuid: UUID, characteristicUUid: UUID) =
+        centralHelper.readData(serviceUuid, characteristicUUid)
+
     fun sendData(serviceUuid: UUID, characteristicUUid: UUID, data: ByteArray) =
         centralHelper.sendData(serviceUuid, characteristicUUid, data)
+
+    fun listen(characteristic: BluetoothGattCharacteristic) =
+        centralHelper.listen(characteristic)
 
     @CallSuper
     open fun close() = centralHelper.close()
@@ -53,17 +63,35 @@ abstract class BleGattClientBase(val ownerTag: String, val context: Context) :
         callback?.onServicesDiscovered(device, services)
     }
 
-    final override fun onCharacteristicChanged(
+    /**
+     * It will be invoked when data is received from the remote device.
+     *
+     * The default implementation just print logs if needed.
+     * You can override it if you want to handle the incoming data.
+     */
+    @CallSuper
+    override fun onCharacteristicChanged(
         gatt: BluetoothGatt,
-        uuid: UUID,
+        characteristic: BleCharacteristicInfo,
         data: ByteArray
     ) {
 
-        if (BleDebugConfigs.bleDataLog) {
-            Timber.tag(ownerTag)
-                .v("Received data [%s]", EncodingUtils.encodeWithHex(data))
+        if (BleConfigs.bleDataLog) {
+            Timber.tag(ownerTag).v(
+                "Received data [%s] from %s",
+                encodeWithHex(data), characteristic
+            )
         }
-        getPacketsWorker().parsePackets(data)
+    }
+
+    /**
+     * Split the data into segments to suit the MTU limit for sending the data.
+     *
+     * The default implementation is just to send the entire data directly.
+     * You have to override it if the data may exceed the MTU limit.
+     */
+    override fun packetDataForSend(mtu: Int, data: ByteArray): List<ByteArray> {
+        return arrayListOf(data)
     }
 
     interface Callback {

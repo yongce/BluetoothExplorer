@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package me.ycdev.android.ble.common.ext
+package me.ycdev.android.ble.common.sig
 
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor

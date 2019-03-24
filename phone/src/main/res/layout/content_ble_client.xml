@@ -17,15 +17,30 @@
         android:text="@string/ble_client_connect"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
+    <Button
+        android:id="@+id/read_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:text="@string/ble_client_read"
+        app:layout_constraintStart_toEndOf="@id/connect_btn"
+        app:layout_constraintTop_toTopOf="@id/connect_btn" />
+    <Button
+        android:id="@+id/send_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:text="@string/ble_client_send"
+        app:layout_constraintStart_toEndOf="@id/read_btn"
+        app:layout_constraintTop_toTopOf="@id/read_btn" />
     <Button
         android:id="@+id/pair_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:text="@string/ble_client_pair"
-        app:layout_constraintStart_toEndOf="@id/connect_btn"
-        app:layout_constraintTop_toTopOf="@id/connect_btn" />
+        app:layout_constraintStart_toEndOf="@id/send_btn"
+        app:layout_constraintTop_toTopOf="@id/send_btn" />
 
     <TextView
         android:id="@+id/status"

@@ -1,7 +1,7 @@
-package me.ycdev.android.ble.common.ext
+package me.ycdev.android.ble.common.sig
 
 import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothGattServer
+import android.bluetooth.BluetoothGattService
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.BroadcastReceiver
@@ -12,6 +12,8 @@ import android.os.ParcelUuid
 import me.ycdev.android.ble.common.server.BleGattServerBase
 
 class TimeServiceServer(context: Context) : BleGattServerBase(TAG, context) {
+    private var receiverRegisterred = false
+
     /**
      * Listens for system clock events and triggers a notification to subscribers.
      */
@@ -31,10 +33,6 @@ class TimeServiceServer(context: Context) : BleGattServerBase(TAG, context) {
     override fun getClientConfigDescriptorUuid() =
         TimeServiceProfile.CLIENT_CONFIG
 
-    override fun addBleServices(gattServer: BluetoothGattServer): Boolean {
-        return gattServer.addService(TimeServiceProfile.createTimeService())
-    }
-
     override fun buildAdvertiseSettings(): AdvertiseSettings {
         return AdvertiseSettings.Builder()
             .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
@@ -52,6 +50,10 @@ class TimeServiceServer(context: Context) : BleGattServerBase(TAG, context) {
             .build()
     }
 
+    override fun createBleServices(): List<BluetoothGattService> {
+        return arrayListOf(TimeServiceProfile.createTimeService())
+    }
+
     override fun onCharacteristicReadRequest(characteristic: BluetoothGattCharacteristic): ByteArray? {
         return TimeServiceProfile.getExactTime(
             System.currentTimeMillis(),
@@ -59,24 +61,40 @@ class TimeServiceServer(context: Context) : BleGattServerBase(TAG, context) {
         )
     }
 
-    override fun onStart() {
-        // Register for system clock events
-        val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_TIME_TICK)
-            addAction(Intent.ACTION_TIME_CHANGED)
-            addAction(Intent.ACTION_TIMEZONE_CHANGED)
+    override fun start(resultCallback: ((Boolean) -> Unit)?) {
+        super.start { success ->
+            if (success) {
+                // Register for system clock events
+                val filter = IntentFilter().apply {
+                    addAction(Intent.ACTION_TIME_TICK)
+                    addAction(Intent.ACTION_TIME_CHANGED)
+                    addAction(Intent.ACTION_TIMEZONE_CHANGED)
+                }
+                context.registerReceiver(timeReceiver, filter)
+                receiverRegisterred = true
+            }
+            if (resultCallback != null) {
+                resultCallback(success)
+            }
         }
-        context.registerReceiver(timeReceiver, filter)
     }
 
-    override fun onStop() {
-        context.unregisterReceiver(timeReceiver)
+    override fun stop(resultCallback: (() -> Unit)?) {
+        super.stop {
+            if (receiverRegisterred) {
+                context.unregisterReceiver(timeReceiver)
+                receiverRegisterred = false
+            }
+            if (resultCallback != null) {
+                resultCallback()
+            }
+        }
     }
 
     private fun notifyTimeChange(time: Long, adjustReason: Byte) {
         val exactTime = TimeServiceProfile.getExactTime(time, adjustReason)
-        peripheralHelper.notifyRegisteredDevices {
-            peripheralHelper.sendData(
+        notifyRegisteredDevices {
+            sendData(
                 it,
                 TimeServiceProfile.TIME_SERVICE,
                 TimeServiceProfile.CURRENT_TIME,

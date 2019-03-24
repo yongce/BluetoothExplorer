@@ -27,7 +27,7 @@ class BleAdvertiseData(
         fun parse(data: ByteArray): BleAdvertiseData {
             var index = 0
             while (index < data.size) {
-                val len: Int = data[index].toInt()
+                val len: Int = data[index].toInt() and 0xFF
                 if (len == 0) {
                     break // no more data
                 }
@@ -116,4 +116,3 @@ class BleAdvertiseData(
         const val TX_POWER_LEVEL_NONE = 127 // the max value defined by Android is 1
     }
 }
-

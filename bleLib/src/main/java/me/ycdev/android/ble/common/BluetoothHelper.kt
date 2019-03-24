@@ -9,7 +9,7 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import me.ycdev.android.lib.common.utils.EncodingUtils
+import me.ycdev.android.lib.common.utils.EncodingUtils.fromHexString
 import timber.log.Timber
 import java.util.Locale
 
@@ -53,6 +53,10 @@ object BluetoothHelper {
             return false
         }
         return true
+    }
+
+    fun isDeviceBonded(context: Context, btAddress: String): Boolean {
+        return getBluetoothAdapter(context)?.bondedDevices?.find { it.address == btAddress } != null
     }
 
     fun gattStatusCodeStr(status: Int): String {
@@ -109,6 +113,6 @@ object BluetoothHelper {
             throw IllegalArgumentException("Bad address: $address")
         }
 
-        return EncodingUtils.fromHexString(address.replace(":", ""))
+        return fromHexString(address.replace(":", ""))
     }
 }

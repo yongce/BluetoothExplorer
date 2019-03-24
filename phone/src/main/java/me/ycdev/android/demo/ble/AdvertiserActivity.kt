@@ -19,11 +19,12 @@ import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
 import me.ycdev.android.ble.common.BluetoothHelper
-import me.ycdev.android.ble.common.server.BleAdvertiser
-import me.ycdev.android.ble.common.server.BleAdvertiserSimple
 import me.ycdev.android.ble.common.ext.MagicPingServer
 import me.ycdev.android.ble.common.ext.MagicRadioServer
-import me.ycdev.android.ble.common.ext.TimeServiceServer
+import me.ycdev.android.ble.common.server.BleAdvertiser
+import me.ycdev.android.ble.common.server.BleAdvertiserSimple
+import me.ycdev.android.ble.common.sig.BatteryServiceServer
+import me.ycdev.android.ble.common.sig.TimeServiceServer
 import me.ycdev.android.demo.ble.common.BleDemoConstants
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -43,6 +44,10 @@ class AdvertiserActivity : AppCompatActivity() {
     internal lateinit var statusView: TextView
 
     private val timestampFormatter = SimpleDateFormat("dd-HH:mm:ss", Locale.US)
+
+    private val startCallback: (Boolean) -> Unit = {
+        updateContentViews()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,22 +107,27 @@ class AdvertiserActivity : AppCompatActivity() {
             .setSettings(settings)
             .setData(data)
             .setCallback(advertiserCallback)
-        bleAdvertiser!!.start()
+        bleAdvertiser!!.start(startCallback)
     }
 
     private fun advertiseForMagicPing() {
         bleAdvertiser = MagicPingServer(this)
-        bleAdvertiser!!.start()
+        bleAdvertiser!!.start(startCallback)
     }
 
     private fun advertiseForMagicRadio() {
         bleAdvertiser = MagicRadioServer(this)
-        bleAdvertiser!!.start()
+        bleAdvertiser!!.start(startCallback)
     }
 
     private fun advertiseForTimeService() {
         bleAdvertiser = TimeServiceServer(this)
-        bleAdvertiser!!.start()
+        bleAdvertiser!!.start(startCallback)
+    }
+
+    private fun advertiseForBatteryService() {
+        bleAdvertiser = BatteryServiceServer(this)
+        bleAdvertiser!!.start(startCallback)
     }
 
     private fun startAdvertising() {
@@ -127,12 +137,15 @@ class AdvertiserActivity : AppCompatActivity() {
             R.id.filter_magic_ping -> advertiseForMagicPing()
             R.id.filter_magic_radio -> advertiseForMagicRadio()
             R.id.filter_time_service -> advertiseForTimeService()
+            R.id.filter_battery_service -> advertiseForBatteryService()
         }
     }
 
     private fun stopAdvertising() {
         addStatusLog(R.string.ble_status_advertise_finished)
-        bleAdvertiser?.stop()
+        bleAdvertiser?.stop {
+            updateContentViews()
+        }
     }
 
     @OnClick(R.id.advertise_btn)
@@ -157,7 +170,8 @@ class AdvertiserActivity : AppCompatActivity() {
         R.id.filter_magic_ww,
         R.id.filter_magic_ping,
         R.id.filter_magic_radio,
-        R.id.filter_time_service
+        R.id.filter_time_service,
+        R.id.filter_battery_service
     )
     fun onCheckboxClick(v: View) {
         if (v != selectedFilterCheckBox) {
@@ -176,7 +190,7 @@ class AdvertiserActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        bleAdvertiser?.stop()
+        bleAdvertiser?.stop(null)
     }
 
     private inner class MyAdvertiseCallback : AdvertiseCallback() {

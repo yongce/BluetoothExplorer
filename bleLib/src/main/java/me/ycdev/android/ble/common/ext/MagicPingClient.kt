@@ -1,8 +1,10 @@
 package me.ycdev.android.ble.common.ext
 
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattService
 import android.content.Context
+import me.ycdev.android.ble.common.BleCharacteristicInfo
 import me.ycdev.android.ble.common.client.BleGattClientBase
 import me.ycdev.android.ble.common.client.ClientState
 import me.ycdev.android.ble.common.client.ClientState.DISCONNECTED
@@ -22,13 +24,6 @@ class MagicPingClient(context: Context) : BleGattClientBase(TAG, context), Packe
         setOperationTimeout(MagicPingProfile.BLE_OPERATION_TIMEOUT)
     }
 
-    override fun getPacketsWorker(): PacketsWorker = packetsWorker
-
-    override fun onDataParsed(data: ByteArray) {
-        val message = String(data)
-        Timber.tag(TAG).d("Received: %s", message)
-    }
-
     override fun onStateChanged(device: BluetoothDevice, newState: ClientState) {
         super.onStateChanged(device, newState)
         if (newState == DISCONNECTED) {
@@ -46,8 +41,8 @@ class MagicPingClient(context: Context) : BleGattClientBase(TAG, context), Packe
         if (pingService != null) {
             val pingCharacteristic = pingService.getCharacteristic(MagicPingProfile.PING_CHARACTERISTIC)
             if (pingCharacteristic != null) {
-                centralHelper.requestMtu(MTU_REQUEST)
-                centralHelper.listen(pingCharacteristic)
+                requestMtu(MTU_REQUEST)
+                listen(pingCharacteristic)
                 schedulePingTask()
             } else {
                 Timber.tag(TAG).w("No characteristic found")
@@ -57,20 +52,43 @@ class MagicPingClient(context: Context) : BleGattClientBase(TAG, context), Packe
         }
     }
 
+    override fun onCharacteristicChanged(
+        gatt: BluetoothGatt,
+        characteristic: BleCharacteristicInfo,
+        data: ByteArray
+    ) {
+        super.onCharacteristicChanged(gatt, characteristic, data)
+        packetsWorker.parsePackets(data)
+    }
+
+    override fun onDataParsed(data: ByteArray) {
+        val message = String(data)
+        Timber.tag(TAG).d("Received: %s", message)
+    }
+
+    override fun packetDataForSend(mtu: Int, data: ByteArray): List<ByteArray> {
+        packetsWorker.maxPacketSize = mtu
+        return packetsWorker.packetData(data)
+    }
+
     override fun close() {
         super.close()
         taskScheduler.clear()
+    }
+
+    fun sendPingMessage() {
+        sendData(
+            MagicPingProfile.PING_SERVICE,
+            MagicPingProfile.PING_CHARACTERISTIC,
+            getPingData()
+        )
     }
 
     private fun schedulePingTask() {
         Timber.tag(TAG).d("schedule ping task")
         taskScheduler.clear()
         taskScheduler.schedulePeriod({
-            sendData(
-                MagicPingProfile.PING_SERVICE,
-                MagicPingProfile.PING_CHARACTERISTIC,
-                getPingData()
-            )
+            sendPingMessage()
         }, 0, PING_INTERVAL)
     }
 

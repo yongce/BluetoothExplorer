@@ -1,30 +1,28 @@
-package me.ycdev.android.ble.common
+package me.ycdev.android.ble.common.internal
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
-import android.os.Handler
-import android.os.HandlerThread
 import android.os.SystemClock
-import me.ycdev.android.ble.common.BleGattHelperBase.Operation.NO_OP
+import me.ycdev.android.ble.common.BleConfigs
+import me.ycdev.android.ble.common.BleException
+import me.ycdev.android.ble.common.BluetoothHelper
+import me.ycdev.android.ble.common.internal.BleGattHelperBase.Operation.NO_OP
 import timber.log.Timber
 import java.util.UUID
 
-open class BleGattHelperBase {
+internal open class BleGattHelperBase {
     var operationTimeout: Long = OPERATION_TIMEOUT_DEFAULT
 
-    protected val bleHandler: Handler
-
+    private val defaultWorkspace = DeviceWorkspace()
     private val workspacesMapping = hashMapOf<BluetoothDevice, DeviceWorkspace>()
     protected var operationLock = Object()
 
-    init {
-        val thread = HandlerThread(TAG)
-        thread.start()
-        bleHandler = Handler(thread.looper)
-    }
-
-    protected fun getWorkspace(device: BluetoothDevice): DeviceWorkspace {
+    protected fun getWorkspace(device: BluetoothDevice?): DeviceWorkspace {
         synchronized(workspacesMapping) {
+            if (device == null) {
+                return defaultWorkspace
+            }
+
             var ws = workspacesMapping[device]
             if (ws == null) {
                 ws = DeviceWorkspace()
@@ -34,8 +32,9 @@ open class BleGattHelperBase {
         }
     }
 
-    protected fun waitForOperationLocked(device: BluetoothDevice, uuid: UUID?, op: Operation) {
-        if (BleDebugConfigs.bleOperationLog) {
+    @Throws(BleException::class)
+    protected fun waitForOperationLocked(device: BluetoothDevice?, uuid: UUID?, op: Operation) {
+        if (BleConfigs.bleOperationLog) {
             Timber.tag(TAG).d(
                 "waitForOperation device[%s] operation[%s] uuid[%s]",
                 device, op, uuid
@@ -51,7 +50,7 @@ open class BleGattHelperBase {
             if (ws.curOperation != Operation.NO_OP) {
                 throw BleException(
                     "Operation[%s] for %s/%s timeout after %dms",
-                    op, device, uuid ?: "", operationTimeout
+                    op, device ?: "-", uuid ?: "-", operationTimeout
                 )
             }
 
@@ -59,7 +58,7 @@ open class BleGattHelperBase {
             if (timeUsed >= operationTimeout) {
                 Timber.tag(TAG).w("Operation[%s] timeout, timeUsed: %dms", op, timeUsed)
             } else {
-                if (BleDebugConfigs.bleOperationLog) {
+                if (BleConfigs.bleOperationLog) {
                     Timber.tag(TAG).d("Operation[%s] done, timeUsed: %dms", op, timeUsed)
                 }
             }
@@ -70,12 +69,24 @@ open class BleGattHelperBase {
         }
     }
 
-    protected fun checkExceptionLocked(device: BluetoothDevice) {
+    protected fun checkExceptionLocked(device: BluetoothDevice?) {
         val ws = getWorkspace(device)
         val anyException = ws.curException
         ws.curException = null
         if (anyException != null) {
             throw anyException
+        }
+    }
+
+    protected fun checkAndNotify(status: Int, op: Operation) {
+        synchronized(operationLock) {
+            try {
+                checkGattStatusCodeLocked(null, status, op)
+                checkOperationLocked(null, op)
+                notifyCompletionLocked(null)
+            } catch (e: BleException) {
+                notifyExceptionLocked(null, e)
+            }
         }
     }
 
@@ -98,16 +109,16 @@ open class BleGattHelperBase {
         }
     }
 
-    private fun notifyCompletionLocked(device: BluetoothDevice) {
+    private fun notifyCompletionLocked(device: BluetoothDevice?) {
         val ws = getWorkspace(device)
-        if (BleDebugConfigs.bleOperationLog) {
+        if (BleConfigs.bleOperationLog) {
             Timber.tag(TAG).d("notifyCompletion: %s", ws.curOperation)
         }
         operationLock.notify()
         ws.curOperation = NO_OP
     }
 
-    protected fun notifyExceptionLocked(device: BluetoothDevice, e: BleException) {
+    protected fun notifyExceptionLocked(device: BluetoothDevice?, e: BleException) {
         Timber.tag(TAG).w("notifyException: %s", e.toString())
         val ws = getWorkspace(device)
         ws.curException = e
@@ -116,7 +127,7 @@ open class BleGattHelperBase {
 
     @Throws(BleException::class)
     private fun checkGattStatusCodeLocked(
-        device: BluetoothDevice,
+        device: BluetoothDevice?,
         status: Int,
         operation: Operation
     ) {
@@ -124,10 +135,19 @@ open class BleGattHelperBase {
             BluetoothGatt.GATT_SUCCESS -> {
             }
             BluetoothGatt.GATT_INSUFFICIENT_ENCRYPTION -> throw BleException("Not paired yet")
-            else -> throw BleException(
-                "Operation [%s] on device [%s] failed: %s",
-                operation, device, BluetoothHelper.gattStatusCodeStr(status)
-            )
+            else -> {
+                if (device != null) {
+                    throw BleException(
+                        "Operation [%s] on device [%s] failed: %s",
+                        operation, device, BluetoothHelper.gattStatusCodeStr(status)
+                    )
+                } else {
+                    throw BleException(
+                        "Operation [%s] failed: %s",
+                        operation, BluetoothHelper.gattStatusCodeStr(status)
+                    )
+                }
+            }
         }
     }
 
@@ -147,7 +167,7 @@ open class BleGattHelperBase {
         }
     }
 
-    private fun checkOperationLocked(device: BluetoothDevice, operation: Operation) {
+    private fun checkOperationLocked(device: BluetoothDevice?, operation: Operation) {
         val ws = getWorkspace(device)
         if (ws.curOperation != operation) {
             Timber.tag(TAG).w(
@@ -159,6 +179,7 @@ open class BleGattHelperBase {
 
     enum class Operation {
         NO_OP,
+        ADD_SERVICE,
         CONNECT,
         DISCONNECT,
         DISCOVERY_SERVICES,

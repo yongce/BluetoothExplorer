@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.annotation.StringRes
@@ -23,6 +24,7 @@ import me.ycdev.android.ble.common.client.BleGattClientSimple
 import me.ycdev.android.ble.common.client.ClientState
 import me.ycdev.android.ble.common.ext.MagicPingClient
 import me.ycdev.android.ble.common.ext.MagicRadioClient
+import me.ycdev.android.ble.common.sig.BatteryServiceClient
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -32,6 +34,10 @@ import java.util.Objects
 class BleClientActivity : AppCompatActivity() {
     @BindView(R.id.connect_btn)
     internal lateinit var connectBtn: Button
+    @BindView(R.id.read_btn)
+    internal lateinit var readBtn: Button
+    @BindView(R.id.send_btn)
+    internal lateinit var sendBtn: Button
     @BindView(R.id.pair_btn)
     internal lateinit var pairBtn: Button
     @BindView(R.id.status)
@@ -68,6 +74,7 @@ class BleClientActivity : AppCompatActivity() {
         gattClient = when (clientType) {
             ClientType.MAGIC_PING -> MagicPingClient(this)
             ClientType.MAGIC_RADIO -> MagicRadioClient(this)
+            ClientType.GSS_BATTERY_SERVICE -> BatteryServiceClient(this)
             else -> BleGattClientSimple(this)
         }
 
@@ -78,6 +85,16 @@ class BleClientActivity : AppCompatActivity() {
         ButterKnife.bind(this)
         updateContentViews()
         addStatusLog(getString(R.string.ble_status_init))
+
+        readBtn.visibility = when (clientType) {
+            ClientType.GSS_BATTERY_SERVICE -> View.VISIBLE
+            else -> View.GONE
+        }
+
+        sendBtn.visibility = when (clientType) {
+            ClientType.MAGIC_PING -> View.VISIBLE
+            else -> View.GONE
+        }
     }
 
     private fun updateContentViews() {
@@ -123,6 +140,34 @@ class BleClientActivity : AppCompatActivity() {
         }
 
         updateContentViews()
+    }
+
+    @OnClick(R.id.read_btn)
+    internal fun readData() {
+        when (clientType) {
+            ClientType.GSS_BATTERY_SERVICE -> readBatteryLevel()
+        }
+    }
+
+    private fun readBatteryLevel() {
+        val client = gattClient as BatteryServiceClient
+        client.readBatteryLevel(object : BatteryServiceClient.Callback {
+            override fun onBatteryLevelChanged(instanceId: Int, level: Int) {
+                addStatusLog(R.string.ble_status_client_battery_level, level, instanceId)
+            }
+        })
+    }
+
+    @OnClick(R.id.send_btn)
+    internal fun sendData() {
+        when (clientType) {
+            ClientType.MAGIC_PING -> sendPingMessage()
+        }
+    }
+
+    private fun sendPingMessage() {
+        val client = gattClient as MagicPingClient
+        client.sendPingMessage()
     }
 
     @OnClick(R.id.pair_btn)
@@ -197,8 +242,11 @@ class BleClientActivity : AppCompatActivity() {
 
     object ClientType {
         const val DEFAULT = 1
-        const val MAGIC_PING = 2
-        const val MAGIC_RADIO = 3
+
+        const val MAGIC_PING = 10
+        const val MAGIC_RADIO = 11
+
+        const val GSS_BATTERY_SERVICE = 100
     }
 
     companion object {

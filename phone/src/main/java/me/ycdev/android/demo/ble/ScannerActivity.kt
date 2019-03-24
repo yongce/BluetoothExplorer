@@ -34,7 +34,8 @@ import me.ycdev.android.ble.common.BluetoothHelper
 import me.ycdev.android.ble.common.client.BleScanner
 import me.ycdev.android.ble.common.ext.MagicPingProfile
 import me.ycdev.android.ble.common.ext.MagicRadioProfile
-import me.ycdev.android.ble.common.ext.TimeServiceProfile
+import me.ycdev.android.ble.common.sig.BatteryServiceProfile
+import me.ycdev.android.ble.common.sig.TimeServiceProfile
 import me.ycdev.android.demo.ble.BleClientActivity.ClientType
 import me.ycdev.android.demo.ble.BleClientActivity.ClientType.DEFAULT
 import me.ycdev.android.demo.ble.common.BleDemoConstants
@@ -160,9 +161,10 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         R.id.filter_magic_ww,
         R.id.filter_magic_ping,
         R.id.filter_magic_radio,
-        R.id.filter_time_service,
         R.id.filter_gfp_service,
-        R.id.filter_mfp_service
+        R.id.filter_mfp_service,
+        R.id.filter_time_service,
+        R.id.filter_battery_service
     )
     fun onCheckboxClick(v: View) {
         if (v != selectedFilterCheckBox) {
@@ -213,16 +215,6 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         return filters
     }
 
-    private fun buildScanFiltersForTimeService(): List<ScanFilter> {
-        val filters = ArrayList<ScanFilter>()
-        filters.add(
-            ScanFilter.Builder()
-                .setServiceUuid(ParcelUuid(TimeServiceProfile.TIME_SERVICE))
-                .build()
-        )
-        return filters
-    }
-
     private fun buildScanFiltersForGfpService(): List<ScanFilter> {
         val filters = arrayListOf<ScanFilter>()
         filters.add(
@@ -243,15 +235,36 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         return filters
     }
 
+    private fun buildScanFiltersForTimeService(): List<ScanFilter> {
+        val filters = ArrayList<ScanFilter>()
+        filters.add(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(TimeServiceProfile.TIME_SERVICE))
+                .build()
+        )
+        return filters
+    }
+
+    private fun buildScanFiltersForBatteryService(): List<ScanFilter> {
+        val filters = ArrayList<ScanFilter>()
+        filters.add(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(BatteryServiceProfile.BATTERY_SERVICE))
+                .build()
+        )
+        return filters
+    }
+
     private fun setupScanFilter() {
         when (selectedFilterCheckBox.id) {
             R.id.filter_all -> bleScanner.setScanFilters(null)
             R.id.filter_magic_ww -> bleScanner.setScanFilters(buildScanFiltersForMagicWw())
             R.id.filter_magic_ping -> bleScanner.setScanFilters(buildScanFiltersForMagicPing())
             R.id.filter_magic_radio -> bleScanner.setScanFilters(buildScanFiltersForMagicRadio())
-            R.id.filter_time_service -> bleScanner.setScanFilters(buildScanFiltersForTimeService())
             R.id.filter_gfp_service -> bleScanner.setScanFilters(buildScanFiltersForGfpService())
             R.id.filter_mfp_service -> bleScanner.setScanFilters(buildScanFiltersForMfpService())
+            R.id.filter_time_service -> bleScanner.setScanFilters(buildScanFiltersForTimeService())
+            R.id.filter_battery_service -> bleScanner.setScanFilters(buildScanFiltersForBatteryService())
             else -> throw RuntimeException("Unknown filter")
         }
 
@@ -262,6 +275,7 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         return when (selectedFilterCheckBox.id) {
             R.id.filter_magic_ping -> ClientType.MAGIC_PING
             R.id.filter_magic_radio -> ClientType.MAGIC_RADIO
+            R.id.filter_battery_service -> ClientType.GSS_BATTERY_SERVICE
             else -> DEFAULT
         }
     }

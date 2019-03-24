@@ -11,25 +11,25 @@ import android.content.Context
 import android.os.Build
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
-import me.ycdev.android.ble.common.BleDebugConfigs
+import me.ycdev.android.ble.common.BleCharacteristicInfo
+import me.ycdev.android.ble.common.BleConfigs
 import me.ycdev.android.ble.common.BleException
-import me.ycdev.android.ble.common.BleGattHelperBase
-import me.ycdev.android.ble.common.BleGattHelperBase.Operation.CONFIG_MTU
-import me.ycdev.android.ble.common.BleGattHelperBase.Operation.DISCOVERY_SERVICES
-import me.ycdev.android.ble.common.BleGattHelperBase.Operation.READ_CHARACTERISTIC
-import me.ycdev.android.ble.common.BleGattHelperBase.Operation.WRITE_CHARACTERISTIC
 import me.ycdev.android.ble.common.BluetoothHelper
 import me.ycdev.android.ble.common.client.ClientState.CONNECTED
 import me.ycdev.android.ble.common.client.ClientState.CONNECTING
 import me.ycdev.android.ble.common.client.ClientState.DISCONNECTED
 import me.ycdev.android.ble.common.client.ClientState.DISCONNECTING
-import me.ycdev.android.lib.common.packets.PacketsWorker
-import me.ycdev.android.lib.common.utils.EncodingUtils
+import me.ycdev.android.ble.common.internal.BleGattHelperBase
+import me.ycdev.android.ble.common.internal.BleGattHelperBase.Operation.CONFIG_MTU
+import me.ycdev.android.ble.common.internal.BleGattHelperBase.Operation.DISCOVERY_SERVICES
+import me.ycdev.android.ble.common.internal.BleGattHelperBase.Operation.READ_CHARACTERISTIC
+import me.ycdev.android.ble.common.internal.BleGattHelperBase.Operation.WRITE_CHARACTERISTIC
+import me.ycdev.android.lib.common.utils.EncodingUtils.encodeWithHex
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
 import java.util.UUID
 
-class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHelperBase() {
+internal class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHelperBase() {
     private val gattCallback = MyGattCallback()
     private var device: BluetoothDevice? = null
     private var gatt: BluetoothGatt? = null
@@ -87,7 +87,7 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
     }
 
     fun discoveryServices() {
-        bleHandler.post { doDiscoveryServices() }
+        BleConfigs.bleHandler.post { doDiscoveryServices() }
     }
 
     @WorkerThread
@@ -106,7 +106,7 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
     }
 
     fun listen(characteristic: BluetoothGattCharacteristic) {
-        bleHandler.post { doListen(characteristic) }
+        BleConfigs.bleHandler.post { doListen(characteristic) }
     }
 
     @WorkerThread
@@ -124,7 +124,7 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
     }
 
     fun requestMtu(mtu: Int) {
-        bleHandler.post { doRequestMtu(mtu) }
+        BleConfigs.bleHandler.post { doRequestMtu(mtu) }
     }
 
     @WorkerThread
@@ -138,7 +138,7 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
     }
 
     fun sendData(serviceUuid: UUID, characteristicUUid: UUID, data: ByteArray) {
-        bleHandler.post { doSendData(serviceUuid, characteristicUUid, data) }
+        BleConfigs.bleHandler.post { doSendData(serviceUuid, characteristicUUid, data) }
     }
 
     @WorkerThread
@@ -171,16 +171,13 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
             return
         }
 
-        // always set the latest MTU before packaging data
-        val dataParser = contract.getPacketsWorker()
-        dataParser.maxPacketSize = getWorkspace(curGatt.device).mtu
-        val segments = dataParser.packetData(data)
+        val segments = contract.packetDataForSend(getWorkspace(curGatt.device).mtu, data)
 
         try {
             synchronized(operationLock) {
                 for (s in segments) {
-                    if (BleDebugConfigs.bleDataLog) {
-                        Timber.tag(TAG).v("Sending data [%s]", EncodingUtils.encodeWithHex(s))
+                    if (BleConfigs.bleDataLog) {
+                        Timber.tag(TAG).v("Sending data [%s]", encodeWithHex(s))
                     }
                     if (!characteristic.setValue(s)) {
                         Timber.tag(TAG).w("Failed to set characteristic value")
@@ -196,6 +193,59 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
             }
         } catch (e: Exception) {
             Timber.tag(TAG).w("Failed to send data: %s", e.toString())
+        }
+    }
+
+    fun readData(serviceUuid: UUID, characteristicUUid: UUID) {
+        BleConfigs.bleHandler.post { doReadData(serviceUuid, characteristicUUid) }
+    }
+
+    @WorkerThread
+    private fun doReadData(serviceUuid: UUID, characteristicUUid: UUID) {
+        Timber.tag(TAG).d("readData")
+        if (state != CONNECTED) {
+            Timber.tag(TAG).w("not connected, failed to read data")
+            return
+        }
+
+        val curGatt = gatt
+        if (curGatt == null) {
+            Timber.tag(TAG).w("no BluetoothGatt, failed to read data")
+            return
+        }
+
+        var serviceCount = 0
+        for (service in curGatt.services) {
+            if (service.uuid != serviceUuid) {
+                continue
+            }
+
+            val characteristic = service.getCharacteristic(characteristicUUid)
+            if (characteristic == null) {
+                Timber.tag(TAG).w("no characteristic found, ignore the service")
+                return
+            }
+
+            Timber.tag(TAG).d(
+                "Read data from service[%d] characteristic[%d]",
+                service.instanceId,
+                characteristic.instanceId
+            )
+            serviceCount++
+            try {
+                synchronized(operationLock) {
+                    curGatt.readCharacteristic(characteristic)
+                    waitForOperationLocked(curGatt.device, characteristicUUid, READ_CHARACTERISTIC)
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).w("Failed to read data: %s", e.toString())
+            }
+        }
+
+        if (serviceCount == 0) {
+            Timber.tag(TAG).w("no GATT service found, failed to read data")
+        } else if (serviceCount > 1) {
+            Timber.tag(TAG).d("$serviceCount service instances found")
         }
     }
 
@@ -247,12 +297,12 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
             characteristic: BluetoothGattCharacteristic
         ) {
             // We must read the data right now. Otherwise it may be updated by next incoming data.
-            val uuid = characteristic.uuid
+            val characteristicInfo = BleCharacteristicInfo.from(characteristic)
             val data = characteristic.value
-            if (BleDebugConfigs.bleOperationLog) {
-                Timber.tag(TAG).d("onCharacteristicChanged, uuid[%s]", uuid)
+            if (BleConfigs.bleOperationLog) {
+                Timber.tag(TAG).d("onCharacteristicChanged: $characteristicInfo")
             }
-            contract.onCharacteristicChanged(gatt, uuid, data)
+            contract.onCharacteristicChanged(gatt, characteristicInfo, data)
         }
 
         override fun onCharacteristicRead(
@@ -260,12 +310,19 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            if (BleDebugConfigs.bleOperationLog) {
+            // We must read the data right now. Otherwise it may be updated by next incoming data.
+            val characteristicInfo = BleCharacteristicInfo.from(characteristic)
+            val data = characteristic.value
+            if (BleConfigs.bleOperationLog) {
                 Timber.tag(TAG).d(
-                    "onCharacteristicRead, uuid[%s] status[%s]",
-                    characteristic.uuid,
+                    "onCharacteristicRead: %s, status[%s]",
+                    characteristicInfo,
                     BluetoothHelper.gattStatusCodeStr(status)
                 )
+            }
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                characteristic.service.instanceId
+                contract.onCharacteristicChanged(gatt, characteristicInfo, data)
             }
             checkAndNotify(gatt, status, READ_CHARACTERISTIC, characteristic.uuid)
         }
@@ -275,7 +332,7 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            if (BleDebugConfigs.bleOperationLog) {
+            if (BleConfigs.bleOperationLog) {
                 Timber.tag(TAG).d(
                     "onCharacteristicWrite, uuid[%s] status[%s]",
                     characteristic.uuid,
@@ -308,8 +365,8 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
             )
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 this@BleCentralHelper.getWorkspace(gatt.device).mtu = mtu
-                checkAndNotify(gatt, status, CONFIG_MTU)
             }
+            checkAndNotify(gatt, status, CONFIG_MTU)
         }
 
         override fun onDescriptorWrite(
@@ -317,7 +374,7 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
             descriptor: BluetoothGattDescriptor,
             status: Int
         ) {
-            if (BleDebugConfigs.bleOperationLog) {
+            if (BleConfigs.bleOperationLog) {
                 Timber.tag(TAG).d(
                     "onDescriptorWrite, uuid[%s] status[%s]",
                     descriptor.uuid,
@@ -331,7 +388,7 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
             descriptor: BluetoothGattDescriptor,
             status: Int
         ) {
-            if (BleDebugConfigs.bleOperationLog) {
+            if (BleConfigs.bleOperationLog) {
                 Timber.tag(TAG).d(
                     "onDescriptorRead, uuid[%s] status[%s]",
                     descriptor.uuid,
@@ -341,7 +398,7 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
         }
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            if (BleDebugConfigs.bleOperationLog) {
+            if (BleConfigs.bleOperationLog) {
                 Timber.tag(TAG).d(
                     "onConnectionStateChange, status[%s] newState[%s] device[%s]",
                     BluetoothHelper.gattStatusCodeStr(status),
@@ -362,13 +419,12 @@ class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHe
     }
 
     interface Contract {
-        fun getPacketsWorker(): PacketsWorker
-
         @MainThread
         fun onStateChanged(device: BluetoothDevice, newState: ClientState)
         @MainThread
         fun onServicesDiscovered(device: BluetoothDevice, services: List<BluetoothGattService>)
-        fun onCharacteristicChanged(gatt: BluetoothGatt, uuid: UUID, data: ByteArray)
+        fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BleCharacteristicInfo, data: ByteArray)
+        fun packetDataForSend(mtu: Int, data: ByteArray): List<ByteArray>
     }
 
     companion object {

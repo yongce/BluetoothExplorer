@@ -5,7 +5,9 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
-import androidx.annotation.MainThread
+import androidx.annotation.AnyThread
+import androidx.annotation.WorkerThread
+import me.ycdev.android.ble.common.BleConfigs
 import me.ycdev.android.ble.common.BluetoothHelper
 import timber.log.Timber
 
@@ -38,8 +40,28 @@ class BleAdvertiserSimple(context: Context) : BleAdvertiser {
         return this
     }
 
-    @MainThread
-    override fun start(): Boolean {
+    @AnyThread
+    override fun start(resultCallback: ((Boolean) -> Unit)?) {
+        BleConfigs.bleHandler.post {
+            val success = startSync()
+            if (resultCallback != null) {
+                resultCallback(success)
+            }
+        }
+    }
+
+    @AnyThread
+    override fun stop(resultCallback: (() -> Unit)?) {
+        BleConfigs.bleHandler.post {
+            stopSync()
+            if (resultCallback != null) {
+                resultCallback()
+            }
+        }
+    }
+
+    @WorkerThread
+    internal fun startSync(): Boolean {
         if (advertiser == null) {
             if (!BluetoothHelper.canDoBleOperations(appContext)) {
                 return false
@@ -63,8 +85,8 @@ class BleAdvertiserSimple(context: Context) : BleAdvertiser {
         }
     }
 
-    @MainThread
-    override fun stop() {
+    @WorkerThread
+    internal fun stopSync() {
         Timber.tag(TAG).d("Stop advertising")
         if (advertsing) {
             advertiser!!.stopAdvertising(realCallback)

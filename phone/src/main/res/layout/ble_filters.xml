@@ -26,11 +26,6 @@
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_magic_radio" />
     <RadioButton
-        android:id="@+id/filter_time_service"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/ble_filter_time_service" />
-    <RadioButton
         android:id="@+id/filter_magic_ww"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -45,4 +40,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_mfp_service" />
+
+    <RadioButton
+        android:id="@+id/filter_time_service"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ble_filter_time_service" />
+    <RadioButton
+        android:id="@+id/filter_battery_service"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ble_filter_battery_service" />
 </com.google.android.flexbox.FlexboxLayout>
