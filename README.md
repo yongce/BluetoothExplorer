@@ -1,4 +1,4 @@
-# BleDemo
+# BleExplore
 
 这个demo用于研究BLE的功能特性。
 
