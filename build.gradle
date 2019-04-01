@@ -14,6 +14,9 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.3.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
         classpath "com.jakewharton:butterknife-gradle-plugin:${versions.butterknife}"
+
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
 
@@ -38,4 +41,20 @@ spotless {
         target "**/*.kt"
         ktlint(versions.ktlint)
     }
+}
+
+ext {
+    // For bintray upload
+    bintrayMaven = [
+            'projectRepo': 'android',
+            'projectUrl': 'https://github.com/yongce/BleExplore',
+            'projectScmConnection': 'https://github.com/yongce/BleExplore.git',
+            'projectScmDevConnection': 'ssh://git@github.com/yongce/BleExplore.git',
+            'projectInceptionYear': '2018',
+            'groupId': 'me.ycdev.android',
+            'version': '1.0.0',
+            'developerId': 'yongce',
+            'developerName': 'Yongce Tu',
+            'developerEmail': 'yongce.tu@gmail.com',
+    ]
 }

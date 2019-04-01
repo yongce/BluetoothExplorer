@@ -8,7 +8,7 @@ import me.ycdev.android.ble.common.client.BleGattClientBase
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
 
-class BatteryServiceClient(context: Context) : BleGattClientBase(TAG, context) {
+open class BatteryServiceClient(context: Context) : BleGattClientBase(TAG, context) {
     private var readCallback: Callback? = null
 
     override fun onCharacteristicChanged(

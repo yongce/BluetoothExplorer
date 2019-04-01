@@ -8,6 +8,7 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import androidx.annotation.MainThread
+import me.ycdev.android.ble.common.BleConfigs
 import me.ycdev.android.ble.common.BluetoothHelper
 import me.ycdev.android.lib.common.perms.PermissionUtils
 import me.ycdev.android.lib.common.utils.MainHandler
@@ -104,7 +105,9 @@ class BleScanner(context: Context) {
 
         val btAddress = result.device.address
         allScanResults[btAddress] = result
-        Timber.tag(TAG).d("Total scan results: %d", allScanResults.size)
+        if (BleConfigs.bleScanLog) {
+            Timber.tag(TAG).d("Total scan results: %d", allScanResults.size)
+        }
         MainHandler.post {
             if (listener != null) {
                 listener!!.onDeviceFound(result)
@@ -114,11 +117,13 @@ class BleScanner(context: Context) {
 
     private fun logScanResult(result: ScanResult, tag: String) {
         val device = result.device
-        Timber.tag(TAG).d(
-            "[%s] rssi: %s, address: %s, name: [%s], bondState: %d, type: %d",
-            tag, result.rssi,
-            device.address, device.name, device.bondState, device.type
-        )
+        if (BleConfigs.bleScanLog) {
+            Timber.tag(TAG).d(
+                "[%s] rssi: %s, address: %s, name: [%s], bondState: %d, type: %d",
+                tag, result.rssi,
+                device.address, device.name, device.bondState, device.type
+            )
+        }
         val uuids = device.uuids
         if (uuids != null && uuids.isNotEmpty()) {
             for (uuid in uuids) {

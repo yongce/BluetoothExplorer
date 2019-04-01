@@ -20,7 +20,7 @@ class BleAdvertiseDataTest {
         assertThat(data.flags).isEqualTo(0x02) // connectible
         assertThat(data.serviceUuids.size).isEqualTo(1)
         assertThat(data.serviceUuids[0]).isEqualTo("a1b2")
-        assertThat(data.localName).isNull()
+        assertThat(data.localNameShort).isNull()
         assertThat(data.deviceName).isEqualTo("TicWatch Pro I6F3")
         assertThat(data.txPowerLevel).isEqualTo(-7)
         assertThat(data.serviceData.size).isEqualTo(0)
@@ -39,7 +39,7 @@ class BleAdvertiseDataTest {
         assertThat(data.flags).isEqualTo(BleAdvertiseData.FLAGS_NONE) // not connectible
         assertThat(data.serviceUuids.size).isEqualTo(1)
         assertThat(data.serviceUuids[0]).isEqualTo("a1b2")
-        assertThat(data.localName).isNull()
+        assertThat(data.localNameShort).isNull()
         assertThat(data.deviceName).isNull()
         assertThat(data.txPowerLevel).isEqualTo(1)
 
@@ -63,7 +63,7 @@ class BleAdvertiseDataTest {
         assertThat(data.flags).isEqualTo(BleAdvertiseData.FLAGS_NONE) // not connectible
         assertThat(data.serviceUuids.size).isEqualTo(1)
         assertThat(data.serviceUuids[0]).isEqualTo("a1b2")
-        assertThat(data.localName).isNull()
+        assertThat(data.localNameShort).isNull()
         assertThat(data.deviceName).isNull()
         assertThat(data.txPowerLevel).isEqualTo(BleAdvertiseData.TX_POWER_LEVEL_NONE)
 
@@ -83,7 +83,7 @@ class BleAdvertiseDataTest {
         assertThat(data.payloadSize).isEqualTo(31)
         assertThat(data.flags).isEqualTo(0x02)
         assertThat(data.serviceUuids.size).isEqualTo(0)
-        assertThat(data.localName).isEqualTo("Libra")
+        assertThat(data.localNameShort).isEqualTo("Libra")
         assertThat(data.deviceName).isNull()
         assertThat(data.txPowerLevel).isEqualTo(-21)
 

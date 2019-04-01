@@ -11,7 +11,7 @@ import android.content.IntentFilter
 import android.os.ParcelUuid
 import me.ycdev.android.ble.common.server.BleGattServerBase
 
-class TimeServiceServer(context: Context) : BleGattServerBase(TAG, context) {
+open class TimeServiceServer(context: Context) : BleGattServerBase(TAG, context) {
     private var receiverRegisterred = false
 
     /**

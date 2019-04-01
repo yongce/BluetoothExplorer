@@ -7,7 +7,7 @@ class BleAdvertiseData(
     val payloadSize: Int,
     val flags: Int,
     val serviceUuids: List<String>,
-    var localName: String?,
+    var localNameShort: String?,
     val deviceName: String?,
     val txPowerLevel: Int,
     val serviceData: Map<String, String>,
@@ -18,7 +18,7 @@ class BleAdvertiseData(
         var payloadSize: Int = 0
         var flags: Int = FLAGS_NONE
         var serviceUuids: ArrayList<String> = arrayListOf()
-        var localName: String? = null
+        var localNameShort: String? = null
         var deviceName: String? = null
         var txPowerLevel: Int = TX_POWER_LEVEL_NONE
         var serviceData: HashMap<String, String> = hashMapOf()
@@ -43,7 +43,7 @@ class BleAdvertiseData(
                 payloadSize,
                 flags,
                 serviceUuids,
-                localName,
+                localNameShort,
                 deviceName,
                 txPowerLevel,
                 serviceData,
@@ -60,12 +60,12 @@ class BleAdvertiseData(
                     flags = data[0].toInt()
                 }
 
-                TYPE_SERVICE_UUID -> {
+                TYPE_SERVICE_UUID_16_BIT -> {
                     data.reverse()
                     serviceUuids.add(encodeWithHex(data, false))
                 }
-                TYPE_LOCAL_NAME -> localName = String(data)
-                TYPE_DEVICE_NAME -> deviceName = String(data)
+                TYPE_LOCAL_NAME_SHORT -> localNameShort = String(data)
+                TYPE_LOCAL_NAME_COMPLETE -> deviceName = String(data)
 
                 TYPE_TX_POWER_LEVEL -> {
                     check(data.size == 1) {
@@ -74,9 +74,9 @@ class BleAdvertiseData(
                     txPowerLevel = data[0].toInt()
                 }
 
-                TYPE_SERVICE_DATA -> {
+                TYPE_SERVICE_DATA_16_BIT -> {
                     check(data.size > 2) {
-                        "The data is too small for TYPE_SERVICE_DATA (size = ${data.size})."
+                        "The data is too small for TYPE_SERVICE_DATA_16_BIT (size = ${data.size})."
                     }
                     val oneUuid = encodeWithHex(data.copyOfRange(0, 2).apply { reverse() }, false)
                     val oneData = encodeWithHex(data.copyOfRange(2, data.size), false)
@@ -97,11 +97,15 @@ class BleAdvertiseData(
 
         companion object {
             const val TYPE_FLAGS: Byte = 0x01
-            const val TYPE_SERVICE_UUID: Byte = 0x03
-            const val TYPE_LOCAL_NAME: Byte = 0x08
-            const val TYPE_DEVICE_NAME: Byte = 0x09
+            const val TYPE_SERVICE_UUID_16_BIT: Byte = 0x03
+            const val TYPE_SERVICE_UUID_32_BIT: Byte = 0x05
+            const val TYPE_SERVICE_UUID_128_BIT: Byte = 0x07
+            const val TYPE_LOCAL_NAME_SHORT: Byte = 0x08
+            const val TYPE_LOCAL_NAME_COMPLETE: Byte = 0x09
             const val TYPE_TX_POWER_LEVEL: Byte = 0x0A
-            const val TYPE_SERVICE_DATA: Byte = 0x16
+            const val TYPE_SERVICE_DATA_16_BIT: Byte = 0x16
+            const val TYPE_SERVICE_DATA_32_BIT: Byte = 0x20
+            const val TYPE_SERVICE_DATA_128_BIT: Byte = 0x21
             const val TYPE_MANUFACTURER_DATA: Byte = 0xFF.toByte()
         }
     }

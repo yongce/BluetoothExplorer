@@ -3,6 +3,8 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply from: "${androidModuleCommon}"
 
+project.archivesBaseName = 'ble-common'
+
 android {
     defaultConfig {
         minSdkVersion 21
@@ -32,3 +34,11 @@ dependencies {
     // Espresso dependencies
     androidTestImplementation deps.test.espressoCore
 }
+
+project.ext {
+    moduleName = 'me.ycdev.android.ble-common'
+    moduleDesc = 'BLE common library for Android'
+}
+
+apply from: rootProject.file('bintray-install.gradle')
+apply from: rootProject.file('bintray-upload.gradle')

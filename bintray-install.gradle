@@ -1,0 +1,40 @@
+apply plugin: 'com.github.dcendents.android-maven'
+
+group = bintrayMaven.groupId
+version = bintrayMaven.version
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            url bintrayMaven.projectUrl
+            inceptionYear bintrayMaven.projectInceptionYear
+
+            packaging 'aar'
+            groupId bintrayMaven.groupId
+            artifactId project.archivesBaseName
+            version bintrayMaven.version
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+
+            scm {
+                url bintrayMaven.projectUrl
+                connection bintrayMaven.projectScmConnection
+                developerConnection bintrayMaven.projectScmDevConnection
+            }
+
+            developers {
+                developer {
+                    id bintrayMaven.developerId
+                    name bintrayMaven.developerName
+                    email bintrayMaven.developerEmail
+                }
+            }
+        }
+    }
+}

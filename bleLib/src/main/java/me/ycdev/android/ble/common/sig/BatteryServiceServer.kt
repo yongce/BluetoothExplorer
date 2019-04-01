@@ -10,7 +10,7 @@ import me.ycdev.android.ble.common.server.BleGattServerBase
 import timber.log.Timber
 import kotlin.random.Random
 
-class BatteryServiceServer(context: Context) : BleGattServerBase(TAG, context) {
+open class BatteryServiceServer(context: Context) : BleGattServerBase(TAG, context) {
     private lateinit var defaultBatteryService: BluetoothGattService
     private lateinit var boxBatteryService: BluetoothGattService
 

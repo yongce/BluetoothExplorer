@@ -6,6 +6,7 @@ import android.os.HandlerThread
 object BleConfigs {
     var bleOperationLog = false
     var bleDataLog = false
+    var bleScanLog = false
 
     internal val bleHandler: Handler by lazy {
         val thread = HandlerThread("BleOp")
@@ -16,5 +17,6 @@ object BleConfigs {
     fun enableAllLogs(enable: Boolean) {
         bleOperationLog = enable
         bleDataLog = enable
+        bleScanLog = enable
     }
 }

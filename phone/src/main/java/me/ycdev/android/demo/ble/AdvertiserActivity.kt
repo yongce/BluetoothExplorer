@@ -170,6 +170,8 @@ class AdvertiserActivity : AppCompatActivity() {
         R.id.filter_magic_ww,
         R.id.filter_magic_ping,
         R.id.filter_magic_radio,
+        R.id.filter_gfp_service,
+        R.id.filter_mfp_service,
         R.id.filter_time_service,
         R.id.filter_battery_service
     )
