@@ -124,12 +124,6 @@ class BleScanner(context: Context) {
                 device.address, device.name, device.bondState, device.type
             )
         }
-        val uuids = device.uuids
-        if (uuids != null && uuids.isNotEmpty()) {
-            for (uuid in uuids) {
-                Timber.tag(TAG).d("UUID: %s", uuid.uuid)
-            }
-        }
     }
 
     private inner class MyScanCallback : ScanCallback() {

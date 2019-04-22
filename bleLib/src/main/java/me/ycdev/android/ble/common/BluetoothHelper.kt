@@ -100,6 +100,20 @@ object BluetoothHelper {
         }
     }
 
+    fun adapterStateStr(state: Int): String {
+        return when (state) {
+            BluetoothAdapter.STATE_TURNING_OFF -> "STATE_TURNING_OFF"
+            BluetoothAdapter.STATE_OFF -> "STATE_OFF"
+            BluetoothAdapter.STATE_TURNING_ON -> "STATE_TURNING_ON"
+            BluetoothAdapter.STATE_ON -> "STATE_ON"
+            BluetoothAdapter.STATE_DISCONNECTING -> "STATE_DISCONNECTING"
+            BluetoothAdapter.STATE_DISCONNECTED -> "STATE_DISCONNECTED"
+            BluetoothAdapter.STATE_CONNECTING -> "STATE_CONNECTING"
+            BluetoothAdapter.STATE_CONNECTED -> "STATE_CONNECTED"
+            else -> "UNKNOWN-$state"
+        }
+    }
+
     fun addressStr(address: ByteArray): String {
         if (address.size != 6) {
             throw IllegalArgumentException("Bad address length: ${address.size}")

@@ -50,9 +50,8 @@ open class BatteryServiceServer(context: Context) : BleGattServerBase(TAG, conte
             }
         }
         Timber.tag(TAG).d(
-            "On read request, battery level [%d] serviceInstanceId[%d] characteristicInstanceId",
-            level,
-            instanceId, characteristic.instanceId
+            "On read request, battery level [%d] serviceInstanceId[%d] characteristicInstanceId[%d]",
+            level, instanceId, characteristic.instanceId
         )
         return byteArrayOf(level.toByte())
     }

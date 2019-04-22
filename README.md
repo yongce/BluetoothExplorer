@@ -58,6 +58,12 @@ BLE协议为了保护用户隐私，所有BLE设备暴露出去的device address
 否则，其中的数据可能会被后面的数据更新掉。例如，如果想异步处理收到的数据，则需要先从 BluetoothGattCharacteristic 对象中取出数据，
 再进行异步处理。
 
+### BLE广播
+
+BLE广播数据包支持多种数据类型，可以有Service UUID，Service Data，Manufacturer Data等，但最大仅能容纳31字节。
+虽然可以通过Service Data, Manufacturer Data等多种匹配方式进行BLE扫描，但还是需要在广播包中添加Service UUID，
+否则会导致扫到了设备，但无法发现Service。
+
 ## 一些错误
 
 ### onClientRegistered - status=133

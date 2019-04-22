@@ -44,32 +44,31 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
             return false
         }
 
-        // TODO what will happen if switch the order?
-
-        // Step 1: Start BLE advertiser
-        bleAdvertiser.setSettings(contract.buildAdvertiseSettings())
-            .setData(contract.buildAdvertiseData())
-            .setCallback(contract.getAdvertiseCallback())
-        if (!bleAdvertiser.startSync()) {
-            return false
-        }
-
-        // Step 2: Start BLE GATT server
+        // Step 1: Start BLE GATT server
         gattServer = BluetoothHelper.getBluetoothManager(context)
             ?.openGattServer(context, gattServerCallback)
         if (gattServer == null) {
             Timber.tag(TAG).w("Failed to get BluetoothGattServer")
-            bleAdvertiser.stopSync()
             return false
         }
 
-        // Step3: Add services
+        // Step 2: Add services
         for (service in contract.createBleServices()) {
             if (!addService(gattServer!!, service)) {
                 Timber.tag(TAG).w("Failed to add BLE service")
-                bleAdvertiser.stopSync()
+                stop()
                 return false
             }
+        }
+
+        // Step 3: Start BLE advertiser
+        bleAdvertiser.setSettings(contract.buildAdvertiseSettings())
+            .setData(contract.buildAdvertiseData())
+            .setCallback(contract.getAdvertiseCallback())
+        if (!bleAdvertiser.startSync()) {
+            Timber.tag(TAG).w("Failed to start advertiser")
+            stop()
+            return false
         }
 
         return true

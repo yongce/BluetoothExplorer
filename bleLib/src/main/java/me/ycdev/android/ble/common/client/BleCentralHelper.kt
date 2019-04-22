@@ -63,12 +63,12 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
         }
 
         this.device = device
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        gatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // The connect requesting will fail with the error "onClientConnectionState() - status=133"
             // when use BluetoothDevice#TRANSPORT_AUTO and the remote device is Android N or higher version.
-            gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+            device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
         } else {
-            gatt = device.connectGatt(context, false, gattCallback)
+            device.connectGatt(context, false, gattCallback)
         }
         return gatt != null
     }
@@ -98,10 +98,14 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
             return
         }
 
-        synchronized(operationLock) {
-            val anyGatt = getConnectedDeviceLocked()
-            anyGatt.discoverServices()
-            waitForOperationLocked(anyGatt.device, null, DISCOVERY_SERVICES)
+        try {
+            synchronized(operationLock) {
+                val anyGatt = getConnectedDeviceLocked()
+                anyGatt.discoverServices()
+                waitForOperationLocked(anyGatt.device, null, DISCOVERY_SERVICES)
+            }
+        } catch (e: Exception) {
+            Timber.tag(TAG).w("Failed to discover services: %s", e.toString())
         }
     }
 
@@ -112,14 +116,18 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
     @WorkerThread
     fun doListen(characteristic: BluetoothGattCharacteristic) {
         Timber.tag(TAG).d("listener on characteristic: %s", characteristic.uuid)
-        synchronized(operationLock) {
-            val anyGatt = getConnectedDeviceLocked()
-            if (!anyGatt.setCharacteristicNotification(characteristic, true)) {
-                throw BleException(
-                    "Failed to enable characteristic notification [%s] on device [%s].",
-                    characteristic.uuid, anyGatt.device
-                )
+        try {
+            synchronized(operationLock) {
+                val anyGatt = getConnectedDeviceLocked()
+                if (!anyGatt.setCharacteristicNotification(characteristic, true)) {
+                    Timber.tag(TAG).w(
+                        "Failed to enable characteristic notification [%s] on device [%s].",
+                        characteristic.uuid, anyGatt.device
+                    )
+                }
             }
+        } catch (e: Exception) {
+            Timber.tag(TAG).w("Failed to enable characteristic notification: %s", e.toString())
         }
     }
 
@@ -130,10 +138,14 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
     @WorkerThread
     fun doRequestMtu(mtu: Int) {
         Timber.tag(TAG).d("request mtu: %d", mtu)
-        synchronized(operationLock) {
-            val anyGatt = getConnectedDeviceLocked()
-            anyGatt.requestMtu(mtu)
-            waitForOperationLocked(anyGatt.device, null, CONFIG_MTU)
+        try {
+            synchronized(operationLock) {
+                val anyGatt = getConnectedDeviceLocked()
+                anyGatt.requestMtu(mtu)
+                waitForOperationLocked(anyGatt.device, null, CONFIG_MTU)
+            }
+        } catch (e: Exception) {
+            Timber.tag(TAG).w("Failed to request MTU: %s", e.toString())
         }
     }
 

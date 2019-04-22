@@ -180,6 +180,7 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
     }
 
     override fun onDeviceFound(@NonNull result: ScanResult) {
+        Timber.tag(TAG).d("ScanRecordRawData: %s", encodeWithHex(result.scanRecord?.bytes))
         val devices = bleScanner.devices
         Collections.sort(devices, deviceComparator)
         adapter.submitList(devices)
@@ -227,9 +228,10 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
 
     private fun buildScanFiltersForMfpService(): List<ScanFilter> {
         val filters = arrayListOf<ScanFilter>()
+        val dataMask = byteArrayOf(0x00)
         filters.add(
             ScanFilter.Builder()
-                .setServiceUuid(ParcelUuid(BleDemoConstants.SERVICE_MFP))
+                .setServiceData(ParcelUuid(BleDemoConstants.SERVICE_MFP), dataMask, dataMask)
                 .build()
         )
         return filters
@@ -373,7 +375,6 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
                     sb.append("\nManufacturer ID: 0x").append(String.format("%04x", id))
                         .append(", data: ").append(encodeWithHex(data))
                 }
-                Timber.tag(TAG).d("ScanRecordRawData: %s", encodeWithHex(scanRecord.bytes))
 
                 holder.advertiseDataView.text = sb.toString()
             } else {
