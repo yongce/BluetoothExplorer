@@ -2,6 +2,7 @@ package me.ycdev.android.ble.common
 
 import android.os.Handler
 import android.os.HandlerThread
+import timber.log.Timber
 
 object BleConfigs {
     var bleOperationLog = false
@@ -18,5 +19,9 @@ object BleConfigs {
         bleOperationLog = enable
         bleDataLog = enable
         bleScanLog = enable
+    }
+
+    fun enableTimberDebugTree() {
+        Timber.plant(Timber.DebugTree())
     }
 }
