@@ -33,7 +33,7 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
     private val gattCallback = MyGattCallback()
     private var device: BluetoothDevice? = null
     private var gatt: BluetoothGatt? = null
-    private var state = ClientState.DISCONNECTED
+    private var state = DISCONNECTED
 
     fun isStarted() = state == CONNECTED || state == CONNECTING
 
@@ -208,12 +208,12 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
         }
     }
 
-    fun readData(serviceUuid: UUID, characteristicUUid: UUID) {
-        BleConfigs.bleHandler.post { doReadData(serviceUuid, characteristicUUid) }
+    fun readData(serviceUuid: UUID, characteristicUUid: UUID, allServices: Boolean = false) {
+        BleConfigs.bleHandler.post { doReadData(serviceUuid, characteristicUUid, allServices) }
     }
 
     @WorkerThread
-    private fun doReadData(serviceUuid: UUID, characteristicUUid: UUID) {
+    private fun doReadData(serviceUuid: UUID, characteristicUUid: UUID, allServices: Boolean) {
         Timber.tag(TAG).d("readData")
         if (state != CONNECTED) {
             Timber.tag(TAG).w("not connected, failed to read data")
@@ -251,6 +251,10 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
                 }
             } catch (e: Exception) {
                 Timber.tag(TAG).w("Failed to read data: %s", e.toString())
+            }
+
+            if (!allServices) {
+                break
             }
         }
 
