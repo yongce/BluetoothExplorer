@@ -164,7 +164,8 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         R.id.filter_gfp_service,
         R.id.filter_mfp_service,
         R.id.filter_time_service,
-        R.id.filter_battery_service
+        R.id.filter_battery_service,
+        R.id.filter_tp2
     )
     fun onCheckboxClick(v: View) {
         if (v != selectedFilterCheckBox) {
@@ -257,6 +258,16 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         return filters
     }
 
+    private fun buildScanFiltersForTp2(): List<ScanFilter> {
+        val filters = ArrayList<ScanFilter>()
+        filters.add(
+            ScanFilter.Builder()
+                .setManufacturerData(0xFDA7, ByteArray(0x00), ByteArray(0x00))
+                .build()
+        )
+        return filters
+    }
+
     private fun setupScanFilter() {
         when (selectedFilterCheckBox.id) {
             R.id.filter_all -> bleScanner.setScanFilters(null)
@@ -267,6 +278,7 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
             R.id.filter_mfp_service -> bleScanner.setScanFilters(buildScanFiltersForMfpService())
             R.id.filter_time_service -> bleScanner.setScanFilters(buildScanFiltersForTimeService())
             R.id.filter_battery_service -> bleScanner.setScanFilters(buildScanFiltersForBatteryService())
+            R.id.filter_tp2 -> bleScanner.setScanFilters(buildScanFiltersForTp2())
             else -> throw RuntimeException("Unknown filter")
         }
 
@@ -373,7 +385,7 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
                 }
                 scanRecord.manufacturerSpecificData.forEach { id, data ->
                     sb.append("\nManufacturer ID: 0x").append(String.format("%04x", id))
-                        .append(", data: ").append(encodeWithHex(data))
+                        .append(", data: ").append(formatManufactureData(id, data))
                 }
 
                 holder.advertiseDataView.text = sb.toString()
@@ -391,6 +403,16 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
                 intent.putExtra(BleClientActivity.EXTRA_CLIENT_TYPE, getClientType())
                 context.startActivity(intent)
             }
+        }
+
+        private fun formatManufactureData(id: Int, data: ByteArray): String {
+            var formattedData = encodeWithHex(data);
+            if (id == 0xFDA7) {
+                val mac1 = BluetoothHelper.addressStr(data.copyOfRange(0, 6))
+                val mac2 = BluetoothHelper.addressStr(data.copyOfRange(6, 12))
+                formattedData += " (mac1=$mac1, mac2=$mac2)"
+            }
+            return formattedData
         }
     }
 

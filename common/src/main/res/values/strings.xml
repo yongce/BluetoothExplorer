@@ -19,6 +19,7 @@
     <string name="ble_filter_battery_service">Battery Service</string>
     <string name="ble_filter_gfp_service">GFP Service</string>
     <string name="ble_filter_mfp_service">MFP Service</string>
+    <string name="ble_filter_tp2">TP2</string>
 
     <string name="ble_advertiser">BLE Advertiser</string>
     <string name="ble_advertiser_start">Start</string>
