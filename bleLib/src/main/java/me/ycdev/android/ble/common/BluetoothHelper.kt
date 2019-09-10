@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
+import android.bluetooth.le.ScanCallback
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -111,6 +112,16 @@ object BluetoothHelper {
             BluetoothAdapter.STATE_CONNECTING -> "STATE_CONNECTING"
             BluetoothAdapter.STATE_CONNECTED -> "STATE_CONNECTED"
             else -> "UNKNOWN-$state"
+        }
+    }
+
+    fun bleScanErrorStr(errCode: Int): String {
+        return when (errCode) {
+            ScanCallback.SCAN_FAILED_ALREADY_STARTED -> "ALREADY_STARTED"
+            ScanCallback.SCAN_FAILED_APPLICATION_REGISTRATION_FAILED -> "APPLICATION_REGISTRATION_FAILED"
+            ScanCallback.SCAN_FAILED_INTERNAL_ERROR -> "INTERNAL_ERROR"
+            ScanCallback.SCAN_FAILED_FEATURE_UNSUPPORTED -> "FEATURE_UNSUPPORTED"
+            else -> "UNKNOWN-$errCode"
         }
     }
 

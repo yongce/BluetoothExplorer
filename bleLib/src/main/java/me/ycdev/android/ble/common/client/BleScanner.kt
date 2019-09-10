@@ -141,7 +141,7 @@ class BleScanner(context: Context) {
         }
 
         override fun onScanFailed(errorCode: Int) {
-            Timber.tag(TAG).w("onScanFailed: %d", errorCode)
+            Timber.tag(TAG).w("onScanFailed: %s", BluetoothHelper.bleScanErrorStr(errorCode))
         }
     }
 
