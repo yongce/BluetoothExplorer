@@ -1,0 +1,35 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply from: "${androidModuleCommon}"
+
+android {
+    defaultConfig {
+        minSdkVersion 21
+    }
+}
+
+dependencies {
+    api project(':library')
+
+    implementation deps.kotlin.stdlib
+    implementation deps.androidx.appcompat
+    implementation deps.androidx.design
+    implementation deps.androidx.constraintLayout
+
+    implementation deps.timber
+    implementation deps.ycdev.androidBase
+
+    testImplementation deps.test.junit
+    testImplementation deps.test.truth
+    testImplementation deps.test.hamcrestCore
+    testImplementation deps.test.hamcrestLibrary
+    testImplementation deps.test.mockitoCore
+    testImplementation deps.ycdev.androidTest
+
+    // AndroidJUnitRunner and JUnit Rules
+    androidTestImplementation deps.test.runner
+    androidTestImplementation deps.test.rules
+    // Espresso dependencies
+    androidTestImplementation deps.test.espressoCore
+}

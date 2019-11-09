@@ -1,0 +1,50 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.jakewharton.butterknife'
+apply from: "${androidModuleCommon}"
+
+android {
+    defaultConfig {
+        applicationId "me.ycdev.android.bluetooth.explorer"
+        versionCode 1
+        versionName "1.0"
+
+        minSdkVersion 23
+        targetSdkVersion 28
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation project(':appCommon')
+
+    compileOnly deps.google.wearableFramework
+
+    implementation deps.kotlin.stdlib
+    implementation deps.google.wearableSupport
+    implementation deps.androidx.wear
+    implementation deps.androidx.appcompat
+    implementation deps.androidx.design
+    implementation deps.androidx.constraintLayout
+
+    implementation deps.timber
+    implementation deps.ycdev.androidBase
+
+    testImplementation deps.test.junit
+    testImplementation deps.test.hamcrestCore
+    testImplementation deps.test.hamcrestLibrary
+    testImplementation deps.test.mockitoCore
+
+    // AndroidJUnitRunner and JUnit Rules
+    androidTestImplementation deps.test.runner
+    androidTestImplementation deps.test.rules
+    // Espresso dependencies
+    androidTestImplementation deps.test.espressoCore
+}

@@ -1,1 +1,7 @@
-include ':bleLib', ':common', ':phone', ':wear'
+rootProject.name = 'BluetoothExplorer'
+
+include ':library'
+
+include ':appCommon'
+include ':appPhone'
+include ':appWear'
