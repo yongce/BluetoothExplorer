@@ -20,6 +20,19 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    flavorDimensions 'pkg'
+    productFlavors {
+        appDefault {
+            buildConfigField "String", "AppLogTag", "\"BleDemo\""
+        }
+
+        app2 {
+            applicationIdSuffix ".app2"
+
+            buildConfigField "String", "AppLogTag", "\"BleDemo2\""
+        }
+    }
 }
 
 dependencies {

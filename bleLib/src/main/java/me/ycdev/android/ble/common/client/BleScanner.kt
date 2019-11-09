@@ -25,11 +25,7 @@ class BleScanner(context: Context) {
     private var listener: ScanListener? = null
     private var onlyNamedDevices = false
 
-    private val allScanResults = HashMap<String, ScanResult>()
     private var nextNumber = 1
-
-    val devices: List<ScanResult>
-        get() = ArrayList(allScanResults.values)
 
     fun setScanSettings(scanSettings: ScanSettings) {
         scanSetting = scanSettings
@@ -66,7 +62,6 @@ class BleScanner(context: Context) {
 
         Timber.tag(TAG).d("Start scanning")
         return if (!isScanning) {
-            allScanResults.clear()
             Timber.tag(TAG).d("Scan filters: %s", scanFilters)
             Timber.tag(TAG).d("Scan settings: %s", scanSetting)
             leScanner!!.startScan(scanFilters, buildScanSettings(), scanCallback)
@@ -103,11 +98,6 @@ class BleScanner(context: Context) {
             return // skip "UNKNOWN" devices
         }
 
-        val btAddress = result.device.address
-        allScanResults[btAddress] = result
-        if (BleConfigs.bleScanLog) {
-            Timber.tag(TAG).d("Total scan results: %d", allScanResults.size)
-        }
         MainHandler.post {
             if (listener != null) {
                 listener!!.onDeviceFound(result)

@@ -11,6 +11,7 @@
     <string name="ble_unknown_device">unknown</string>
     <string name="ble_no_scan_record">No scan record</string>
     <string name="ble_only_named_devices">Only named devices</string>
+    <string name="ble_scan_record_filter">BLE scan record filter</string>
     <string name="ble_filter_all">All</string>
     <string name="ble_filter_magic_ww">Magic WW</string>
     <string name="ble_filter_magic_ping">Magic Ping</string>

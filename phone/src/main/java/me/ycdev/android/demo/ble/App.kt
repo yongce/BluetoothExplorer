@@ -11,10 +11,6 @@ class App : Application() {
         super.onCreate()
         Timber.plant(Timber.DebugTree())
         ApplicationUtils.initApplication(this)
-        Timber.tag(TAG).d("app start...")
-    }
-
-    companion object {
-        private const val TAG = "bledemo.app"
+        Timber.tag(BuildConfig.AppLogTag).d("app start...[%s]", packageName)
     }
 }
