@@ -30,9 +30,6 @@ import butterknife.ButterKnife
 import butterknife.OnClick
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.BleAdvertiseData.Parser
-import me.ycdev.android.bluetooth.ble.R.id
-import me.ycdev.android.bluetooth.ble.R.layout
-import me.ycdev.android.bluetooth.ble.R.string
 import me.ycdev.android.bluetooth.ble.client.BleScanner
 import me.ycdev.android.bluetooth.explorer.BleClientActivity.ClientType
 import me.ycdev.android.bluetooth.explorer.BleClientActivity.ClientType.DEFAULT
@@ -63,15 +60,15 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
     BleScanner.ScanListener {
     private lateinit var bleScanner: BleScanner
 
-    @BindView(id.only_named_devices)
+    @BindView(R2.id.only_named_devices)
     internal lateinit var onlyNamedDevicesCheckbox: CheckBox
-    @BindView(id.scan_record_filter)
+    @BindView(R2.id.scan_record_filter)
     internal lateinit var scanRecordFilterEditor: EditText
-    @BindView(id.scan_btn)
+    @BindView(R2.id.scan_btn)
     internal lateinit var leScanBtn: Button
-    @BindView(id.status)
+    @BindView(R2.id.status)
     internal lateinit var statusView: TextView
-    @BindView(id.devices)
+    @BindView(R2.id.devices)
     internal lateinit var listView: RecyclerView
 
     private lateinit var selectedFilterCheckBox: RadioButton
@@ -97,10 +94,10 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
 
     override fun onCreate(@Nullable savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(layout.activity_scanner)
+        setContentView(R.layout.activity_scanner)
         Timber.tag(TAG).d("onCreate")
 
-        val toolbar = findViewById<Toolbar>(id.toolbar)
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         Objects.requireNonNull<ActionBar>(supportActionBar).setDisplayHomeAsUpEnabled(true)
 
@@ -112,7 +109,7 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
     private fun initContentViews() {
         ButterKnife.bind(this)
 
-        selectedFilterCheckBox = findViewById(id.filter_magic_ping)
+        selectedFilterCheckBox = findViewById(R.id.filter_magic_ping)
         selectedFilterCheckBox.isChecked = true
 
         adapter = MyAdapter(this)
@@ -140,15 +137,15 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
 
     private fun updateContentViews() {
         if (bleScanner.isScanning) {
-            leScanBtn.setText(string.ble_scan_stop)
+            leScanBtn.setText(R.string.ble_scan_stop)
             statusView.text = getString(
-                string.ble_status_scanning,
+                R.string.ble_status_scanning,
                 selectedFilterCheckBox.text,
                 adapter.itemCount
             )
         } else {
-            leScanBtn.setText(string.ble_scan_start)
-            statusView.text = getString(string.ble_status_scanning_done, adapter.itemCount)
+            leScanBtn.setText(R.string.ble_scan_start)
+            statusView.text = getString(R.string.ble_status_scanning_done, adapter.itemCount)
         }
     }
 
@@ -183,15 +180,15 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
     }
 
     @OnClick(
-        id.filter_all,
-        id.filter_magic_ww,
-        id.filter_magic_ping,
-        id.filter_magic_radio,
-        id.filter_gfp_service,
-        id.filter_mfp_service,
-        id.filter_time_service,
-        id.filter_battery_service,
-        id.filter_tp2
+        R2.id.filter_all,
+        R2.id.filter_magic_ww,
+        R2.id.filter_magic_ping,
+        R2.id.filter_magic_radio,
+        R2.id.filter_gfp_service,
+        R2.id.filter_mfp_service,
+        R2.id.filter_time_service,
+        R2.id.filter_battery_service,
+        R2.id.filter_tp2
     )
     fun onCheckboxClick(v: View) {
         if (v != selectedFilterCheckBox) {
@@ -222,15 +219,15 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
 
     private fun getSelectedDevice(): BleDevice {
         val deviceId = when (selectedFilterCheckBox.id) {
-            id.filter_all -> DefaultDevice.ID
-            id.filter_magic_ww -> MagicWw.ID
-            id.filter_magic_ping -> MagicPing.ID
-            id.filter_magic_radio -> MagicRadio.ID
-            id.filter_gfp_service -> GfpService.ID
-            id.filter_mfp_service -> MfpService.ID
-            id.filter_time_service -> TimeService.ID
-            id.filter_battery_service -> BatteryService.ID
-            id.filter_tp2 -> Tp2.ID
+            R.id.filter_all -> DefaultDevice.ID
+            R.id.filter_magic_ww -> MagicWw.ID
+            R.id.filter_magic_ping -> MagicPing.ID
+            R.id.filter_magic_radio -> MagicRadio.ID
+            R.id.filter_gfp_service -> GfpService.ID
+            R.id.filter_mfp_service -> MfpService.ID
+            R.id.filter_time_service -> TimeService.ID
+            R.id.filter_battery_service -> BatteryService.ID
+            R.id.filter_tp2 -> Tp2.ID
             else -> throw RuntimeException("Unknown device filter")
         }
         return bleDevices[deviceId] ?: throw RuntimeException("Device[$deviceId] not found")
@@ -245,15 +242,15 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
 
     private fun getClientType(): Int {
         return when (selectedFilterCheckBox.id) {
-            id.filter_magic_ping -> ClientType.MAGIC_PING
-            id.filter_magic_radio -> ClientType.MAGIC_RADIO
-            id.filter_battery_service -> ClientType.GSS_BATTERY_SERVICE
-            id.filter_tp2 -> ClientType.GSS_BATTERY_SERVICE
+            R.id.filter_magic_ping -> ClientType.MAGIC_PING
+            R.id.filter_magic_radio -> ClientType.MAGIC_RADIO
+            R.id.filter_battery_service -> ClientType.GSS_BATTERY_SERVICE
+            R.id.filter_tp2 -> ClientType.GSS_BATTERY_SERVICE
             else -> DEFAULT
         }
     }
 
-    @OnClick(id.scan_btn)
+    @OnClick(R2.id.scan_btn)
     internal fun scanBleDevices() {
         if (BleScanner.hasNoPermissions(this)) {
             BleHelper.requestPermsForBleScan(this,
@@ -298,8 +295,8 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
         private val timestampFormatter = SimpleDateFormat("yyyyMMdd-HH:mm:ss", Locale.US)
 
         private val inflater: LayoutInflater = LayoutInflater.from(context)
-        private val unknownDeviceName: String = context.getString(string.ble_unknown_device)
-        private val noScanRecordTips: String = context.getString(string.ble_no_scan_record)
+        private val unknownDeviceName: String = context.getString(R.string.ble_unknown_device)
+        private val noScanRecordTips: String = context.getString(R.string.ble_no_scan_record)
 
         private val scanResults = HashMap<String, BleScanInfo>()
 
@@ -319,7 +316,7 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
 
         @NonNull
         override fun onCreateViewHolder(@NonNull parent: ViewGroup, viewType: Int): MyViewHolder {
-            val itemView = inflater.inflate(layout.devices_list_item, parent, false)
+            val itemView = inflater.inflate(R.layout.devices_list_item, parent, false)
             return MyViewHolder(itemView)
         }
 
@@ -388,13 +385,13 @@ class ScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCal
     }
 
     internal class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        @BindView(id.name)
+        @BindView(R2.id.name)
         internal lateinit var nameView: TextView
-        @BindView(id.address)
+        @BindView(R2.id.address)
         internal lateinit var addressView: TextView
-        @BindView(id.timestamp)
+        @BindView(R2.id.timestamp)
         internal lateinit var timestampView: TextView
-        @BindView(id.advertise_data)
+        @BindView(R2.id.advertise_data)
         internal lateinit var advertiseDataView: TextView
 
         init {

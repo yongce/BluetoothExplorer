@@ -125,6 +125,17 @@ object BluetoothHelper {
         }
     }
 
+    fun profileStr(profile: Int): String {
+        return when (profile) {
+            BluetoothProfile.A2DP -> "A2DP"
+            BluetoothProfile.GATT -> "GATT"
+            BluetoothProfile.GATT_SERVER -> "GATT_SERVER"
+            BluetoothProfile.HEADSET -> "HEADSET"
+            BluetoothProfile.HEALTH -> "HEALTH"
+            else -> "Profile-$profile"
+        }
+    }
+
     fun addressStr(address: ByteArray): String {
         if (address.size != 6) {
             throw IllegalArgumentException("Bad address length: ${address.size}")

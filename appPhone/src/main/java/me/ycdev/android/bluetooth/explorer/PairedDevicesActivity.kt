@@ -24,19 +24,16 @@ import butterknife.BindView
 import butterknife.ButterKnife
 import butterknife.OnClick
 import me.ycdev.android.bluetooth.BluetoothHelper
-import me.ycdev.android.bluetooth.ble.R.id
-import me.ycdev.android.bluetooth.ble.R.layout
-import me.ycdev.android.bluetooth.ble.R.string
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
 import java.util.Objects
 
 class PairedDevicesActivity : AppCompatActivity() {
-    @BindView(id.refresh_btn)
+    @BindView(R2.id.refresh_btn)
     internal lateinit var refreshBtn: Button
-    @BindView(id.status)
+    @BindView(R2.id.status)
     internal lateinit var statusView: TextView
-    @BindView(id.devices)
+    @BindView(R2.id.devices)
     internal lateinit var listView: RecyclerView
 
     private lateinit var adapter: MyAdapter
@@ -44,10 +41,10 @@ class PairedDevicesActivity : AppCompatActivity() {
 
     override fun onCreate(@Nullable savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(layout.activity_paired_devices)
+        setContentView(R.layout.activity_paired_devices)
         Timber.tag(TAG).d("onCreate")
 
-        val toolbar = findViewById<Toolbar>(id.toolbar)
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         Objects.requireNonNull<ActionBar>(supportActionBar).setDisplayHomeAsUpEnabled(true)
 
@@ -77,7 +74,7 @@ class PairedDevicesActivity : AppCompatActivity() {
         )
         listView.addItemDecoration(itemDecoration)
 
-        statusView.text = getString(string.ble_status_init)
+        statusView.text = getString(R.string.ble_status_init)
 
         MainHandler.postDelayed({
             refreshPairedDevices()
@@ -86,7 +83,7 @@ class PairedDevicesActivity : AppCompatActivity() {
 
     private fun updateContentViews() {
         statusView.text = getString(
-            string.ble_paired_viewer_status,
+            R.string.ble_paired_viewer_status,
             Utils.getTimestamp(), (devices?.size ?: 0)
         )
     }
@@ -104,7 +101,7 @@ class PairedDevicesActivity : AppCompatActivity() {
         Timber.tag(TAG).d("onDestroy")
     }
 
-    @OnClick(id.refresh_btn)
+    @OnClick(R2.id.refresh_btn)
     internal fun refreshPairedDevices() {
         if (!BluetoothHelper.isBluetoothEnabled(this)) {
             BluetoothHelper.startBluetoothSysUI(this,
@@ -135,11 +132,11 @@ class PairedDevicesActivity : AppCompatActivity() {
         ) {
 
         private val mInflater: LayoutInflater = LayoutInflater.from(context)
-        private val mUnknownDeviceName: String = context.getString(string.ble_unknown_device)
+        private val mUnknownDeviceName: String = context.getString(R.string.ble_unknown_device)
 
         @NonNull
         override fun onCreateViewHolder(@NonNull parent: ViewGroup, viewType: Int): MyViewHolder {
-            val itemView = mInflater.inflate(layout.devices_list_item, parent, false)
+            val itemView = mInflater.inflate(R.layout.devices_list_item, parent, false)
             return MyViewHolder(itemView)
         }
 
@@ -161,9 +158,9 @@ class PairedDevicesActivity : AppCompatActivity() {
     }
 
     internal class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        @BindView(id.name)
+        @BindView(R2.id.name)
         internal lateinit var nameView: TextView
-        @BindView(id.address)
+        @BindView(R2.id.address)
         internal lateinit var addressView: TextView
 
         init {

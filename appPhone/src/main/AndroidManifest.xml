@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="me.ycdev.android.bluetooth.ble">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="me.ycdev.android.bluetooth.explorer">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
@@ -57,6 +58,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="me.ycdev.android.bluetooth.explorer.MainActivity" />
         </activity>
+
+        <service
+            android:name=".debug.DebugService"
+            android:exported="true"
+            tools:ignore="ExportedService" />
     </application>
 
 </manifest>

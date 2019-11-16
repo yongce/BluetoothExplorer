@@ -1,8 +1,6 @@
 package me.ycdev.android.bluetooth.explorer
 
 import android.app.Application
-import me.ycdev.android.bluetooth.ble.BuildConfig
-
 import me.ycdev.android.lib.common.utils.ApplicationUtils
 import timber.log.Timber
 
