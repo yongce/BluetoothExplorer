@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
         findViewById<View>(R.id.ble_scanner).setOnClickListener {
-            val intent = Intent(this, ScannerActivity::class.java)
+            val intent = Intent(this, BleScannerActivity::class.java)
             startActivity(intent)
         }
 

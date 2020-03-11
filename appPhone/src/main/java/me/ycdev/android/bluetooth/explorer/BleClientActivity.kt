@@ -9,15 +9,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import butterknife.BindView
-import butterknife.ButterKnife
-import butterknife.OnClick
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.client.BleGattClientBase
 import me.ycdev.android.bluetooth.ble.client.BleGattClientSimple
@@ -25,6 +19,7 @@ import me.ycdev.android.bluetooth.ble.client.ClientState
 import me.ycdev.android.bluetooth.ble.ext.MagicPingClient
 import me.ycdev.android.bluetooth.ble.ext.MagicRadioClient
 import me.ycdev.android.bluetooth.ble.sig.BatteryServiceClient
+import me.ycdev.android.bluetooth.explorer.databinding.ActivityBleClientBinding
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -32,16 +27,7 @@ import java.util.Locale
 import java.util.Objects
 
 class BleClientActivity : AppCompatActivity() {
-    @BindView(R2.id.connect_btn)
-    internal lateinit var connectBtn: Button
-    @BindView(R2.id.read_btn)
-    internal lateinit var readBtn: Button
-    @BindView(R2.id.send_btn)
-    internal lateinit var sendBtn: Button
-    @BindView(R2.id.pair_btn)
-    internal lateinit var pairBtn: Button
-    @BindView(R2.id.status)
-    internal lateinit var statusView: TextView
+    private lateinit var binding: ActivityBleClientBinding
 
     private lateinit var gattClient: BleGattClientBase
     private val gattCallback = MyCallback()
@@ -55,11 +41,11 @@ class BleClientActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_ble_client)
+        binding = ActivityBleClientBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         Timber.tag(TAG).d("onCreate")
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
+        setSupportActionBar(binding.toolbar)
         Objects.requireNonNull<ActionBar>(supportActionBar).setDisplayHomeAsUpEnabled(true)
 
         device = intent.getParcelableExtra(EXTRA_DEVICE)
@@ -88,30 +74,34 @@ class BleClientActivity : AppCompatActivity() {
     }
 
     private fun initContentViews() {
-        ButterKnife.bind(this)
         updateContentViews()
         addStatusLog(getString(R.string.ble_status_init))
 
-        readBtn.visibility = when (clientType) {
+        binding.content.readBtn.visibility = when (clientType) {
             ClientType.GSS_BATTERY_SERVICE -> View.VISIBLE
             else -> View.GONE
         }
 
-        sendBtn.visibility = when (clientType) {
+        binding.content.sendBtn.visibility = when (clientType) {
             ClientType.MAGIC_PING -> View.VISIBLE
             else -> View.GONE
         }
+
+        binding.content.connectBtn.setOnClickListener { connect() }
+        binding.content.readBtn.setOnClickListener { readData() }
+        binding.content.sendBtn.setOnClickListener { sendData() }
+        binding.content.pairBtn.setOnClickListener { pair() }
     }
 
     private fun updateContentViews() {
         if (gattClient.isStarted()) {
-            connectBtn.setText(R.string.ble_client_disconnect)
+            binding.content.connectBtn.setText(R.string.ble_client_disconnect)
         } else {
-            connectBtn.setText(R.string.ble_client_connect)
+            binding.content.connectBtn.setText(R.string.ble_client_connect)
         }
 
         if (device?.bondState == BluetoothDevice.BOND_BONDED) {
-            pairBtn.isEnabled = false
+            binding.content.pairBtn.isEnabled = false
         }
     }
 
@@ -119,8 +109,8 @@ class BleClientActivity : AppCompatActivity() {
     private fun addStatusLog(status: CharSequence) {
         Timber.tag(TAG).d("Status changed: %s", status)
         val timestamp = timestampFormatter.format(Date(System.currentTimeMillis()))
-        val oldStatus = statusView.text
-        statusView.text = "$timestamp $status\n\n$oldStatus"
+        val oldStatus = binding.content.status.text
+        binding.content.status.text = "$timestamp $status\n\n$oldStatus"
     }
 
     private fun addStatusLog(@StringRes resId: Int, vararg formatArgs: Any) {
@@ -128,8 +118,7 @@ class BleClientActivity : AppCompatActivity() {
         addStatusLog(status)
     }
 
-    @OnClick(R2.id.connect_btn)
-    internal fun connect() {
+    private fun connect() {
         if (!BluetoothHelper.isBluetoothEnabled(this)) {
             BluetoothHelper.startBluetoothSysUI(this,
                 RC_BT_ENABLE
@@ -150,8 +139,7 @@ class BleClientActivity : AppCompatActivity() {
         updateContentViews()
     }
 
-    @OnClick(R2.id.read_btn)
-    internal fun readData() {
+    private fun readData() {
         when (clientType) {
             ClientType.GSS_BATTERY_SERVICE -> readBatteryLevel()
         }
@@ -166,8 +154,7 @@ class BleClientActivity : AppCompatActivity() {
         })
     }
 
-    @OnClick(R2.id.send_btn)
-    internal fun sendData() {
+    private fun sendData() {
         when (clientType) {
             ClientType.MAGIC_PING -> sendPingMessage()
         }
@@ -178,8 +165,7 @@ class BleClientActivity : AppCompatActivity() {
         client.sendPingMessage()
     }
 
-    @OnClick(R2.id.pair_btn)
-    internal fun pair() {
+    private fun pair() {
         if (!BluetoothHelper.isBluetoothEnabled(this)) {
             BluetoothHelper.startBluetoothSysUI(this,
                 RC_BT_ENABLE
@@ -200,6 +186,7 @@ class BleClientActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_BT_ENABLE) {
             if (BluetoothHelper.isBluetoothEnabled(this)) {
 //                connect()
@@ -221,7 +208,7 @@ class BleClientActivity : AppCompatActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
             if (BluetoothDevice.ACTION_BOND_STATE_CHANGED == action) {
-                val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) as BluetoothDevice
                 val state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
                 addStatusLog(
                     R.string.ble_status_client_pair_state_changed,

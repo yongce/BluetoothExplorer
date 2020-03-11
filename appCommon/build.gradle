@@ -7,6 +7,8 @@ android {
     defaultConfig {
         minSdkVersion 21
     }
+
+    viewBinding.enabled = true
 }
 
 dependencies {
@@ -14,17 +16,16 @@ dependencies {
 
     implementation deps.kotlin.stdlib
     implementation deps.androidx.appcompat
-    implementation deps.androidx.design
+    implementation deps.androidx.material
     implementation deps.androidx.constraintLayout
 
     implementation deps.timber
     implementation deps.ycdev.androidBase
 
+    testImplementation deps.test.core
     testImplementation deps.test.junit
     testImplementation deps.test.truth
-    testImplementation deps.test.hamcrestCore
-    testImplementation deps.test.hamcrestLibrary
-    testImplementation deps.test.mockitoCore
+    testImplementation deps.test.mockk
     testImplementation deps.ycdev.androidTest
 
     // AndroidJUnitRunner and JUnit Rules

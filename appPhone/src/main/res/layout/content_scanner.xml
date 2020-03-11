@@ -5,11 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="me.ycdev.android.bluetooth.explorer.ScannerActivity"
+    tools:context="me.ycdev.android.bluetooth.explorer.BleScannerActivity"
     tools:showIn="@layout/activity_scanner">
 
     <!-- Filters chain -->
-    <include layout="@layout/ble_filters" />
+    <include
+        android:id="@+id/filters"
+        layout="@layout/ble_filters" />
 
     <CheckBox
         android:id="@+id/only_named_devices"

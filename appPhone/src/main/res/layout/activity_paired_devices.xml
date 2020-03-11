@@ -20,6 +20,8 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <include layout="@layout/content_paired_devices" />
+    <include
+        android:id="@+id/content"
+        layout="@layout/content_paired_devices" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

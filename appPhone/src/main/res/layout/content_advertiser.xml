@@ -9,7 +9,9 @@
     tools:showIn="@layout/activity_advertiser">
 
     <!-- Filters chain -->
-    <include layout="@layout/ble_filters" />
+    <include
+        android:id="@+id/filters"
+        layout="@layout/ble_filters" />
 
     <Button
         android:id="@+id/advertise_btn"

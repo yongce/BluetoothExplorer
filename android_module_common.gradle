@@ -1,7 +1,7 @@
-// Copied from https://raw.githubusercontent.com/yongce/AndroidLib/master/android_module_common.gradle
-/**
+/*
  * File: 'android_module_common.gradle'
- * Version: 2018.5.26
+ * Location: https://raw.githubusercontent.com/yongce/AndroidLib/master/android_module_common.gradle
+ * Version: 2020.03.08
  * All android projects can copy and include this file.
  */
 
@@ -131,13 +131,15 @@ android {
 
         abortOnError true
         ignoreWarnings isIgnoreLintWarnings()
-
-        disable 'GoogleAppIndexingWarning'
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 
     testOptions {

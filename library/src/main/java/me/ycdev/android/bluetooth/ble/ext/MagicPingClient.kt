@@ -18,9 +18,7 @@ import timber.log.Timber
 class MagicPingClient(context: Context) : BleGattClientBase(TAG, context), PacketsWorker.ParserCallback {
     private val packetsWorker = TinyPacketsWorker(this)
     private val messageId = IntegerHolder(0)
-    private val taskScheduler = TaskScheduler(HandlerExecutor.withMainLooper(),
-        TAG
-    )
+    private val taskScheduler = TaskScheduler(HandlerExecutor.withMainLooper(), TAG)
 
     init {
         setOperationTimeout(MagicPingProfile.BLE_OPERATION_TIMEOUT)
@@ -89,7 +87,7 @@ class MagicPingClient(context: Context) : BleGattClientBase(TAG, context), Packe
     private fun schedulePingTask() {
         Timber.tag(TAG).d("schedule ping task")
         taskScheduler.clear()
-        taskScheduler.schedulePeriod({
+        taskScheduler.schedulePeriod(Runnable {
             sendPingMessage()
         }, 0, PING_INTERVAL)
     }

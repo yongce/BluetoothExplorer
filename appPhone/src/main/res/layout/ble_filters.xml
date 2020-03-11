@@ -11,48 +11,48 @@
     app:flexWrap="wrap"
     app:justifyContent="space_between">
     <RadioButton
-        android:id="@+id/filter_all"
+        android:id="@+id/all"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_all" />
     <RadioButton
-        android:id="@+id/filter_magic_ping"
+        android:id="@+id/magic_ping"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_magic_ping" />
     <RadioButton
-        android:id="@+id/filter_magic_radio"
+        android:id="@+id/magic_radio"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_magic_radio" />
     <RadioButton
-        android:id="@+id/filter_magic_ww"
+        android:id="@+id/magic_ww"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_magic_ww" />
     <RadioButton
-        android:id="@+id/filter_gfp_service"
+        android:id="@+id/gfp_service"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_gfp_service" />
     <RadioButton
-        android:id="@+id/filter_mfp_service"
+        android:id="@+id/mfp_service"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_mfp_service" />
 
     <RadioButton
-        android:id="@+id/filter_time_service"
+        android:id="@+id/time_service"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_time_service" />
     <RadioButton
-        android:id="@+id/filter_battery_service"
+        android:id="@+id/battery_service"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_battery_service" />
     <RadioButton
-        android:id="@+id/filter_tp2"
+        android:id="@+id/tp2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_tp2" />

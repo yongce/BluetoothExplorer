@@ -94,7 +94,11 @@ abstract class BleGattServerBase(val ownerTag: String, val context: Context) : B
      * The default implementation is just to send the entire data directly.
      * You have to override it if the data may exceed the MTU limit.
      */
-    override fun packetDataForSend(mtu: Int, data: ByteArray): List<ByteArray> {
+    override fun packetDataForSend(
+        device: BluetoothDevice,
+        mtu: Int,
+        data: ByteArray
+    ): List<ByteArray> {
         return arrayListOf(data)
     }
 

@@ -15,6 +15,8 @@ android {
         targetSdkVersion 28
     }
 
+    viewBinding.enabled = true
+
     buildTypes {
         release {
             minifyEnabled false
@@ -32,16 +34,17 @@ dependencies {
     implementation deps.google.wearableSupport
     implementation deps.androidx.wear
     implementation deps.androidx.appcompat
-    implementation deps.androidx.design
+    implementation deps.androidx.material
     implementation deps.androidx.constraintLayout
 
     implementation deps.timber
     implementation deps.ycdev.androidBase
 
+    testImplementation deps.test.core
     testImplementation deps.test.junit
-    testImplementation deps.test.hamcrestCore
-    testImplementation deps.test.hamcrestLibrary
-    testImplementation deps.test.mockitoCore
+    testImplementation deps.test.truth
+    testImplementation deps.test.mockk
+    testImplementation deps.ycdev.androidTest
 
     // AndroidJUnitRunner and JUnit Rules
     androidTestImplementation deps.test.runner

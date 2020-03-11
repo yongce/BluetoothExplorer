@@ -34,7 +34,7 @@
         </activity>
 
         <activity
-            android:name="me.ycdev.android.bluetooth.explorer.ScannerActivity"
+            android:name="me.ycdev.android.bluetooth.explorer.BleScannerActivity"
             android:label="@string/ble_scanner"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
@@ -47,7 +47,7 @@
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="me.ycdev.android.bluetooth.explorer.ScannerActivity" />
+                android:value="me.ycdev.android.bluetooth.explorer.BleScannerActivity" />
         </activity>
 
         <activity

@@ -13,9 +13,9 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import androidx.annotation.WorkerThread
+import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.BleCharacteristicInfo
 import me.ycdev.android.bluetooth.ble.BleConfigs
-import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.internal.BleGattHelperBase
 import me.ycdev.android.bluetooth.ble.internal.BleGattHelperBase.Operation.ADD_SERVICE
 import me.ycdev.android.bluetooth.ble.internal.BleGattHelperBase.Operation.WRITE_CHARACTERISTIC
@@ -154,7 +154,7 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
             return
         }
 
-        val segments = contract.packetDataForSend(getWorkspace(device).mtu, data)
+        val segments = contract.packetDataForSend(device, getWorkspace(device).mtu, data)
 
         try {
             synchronized(operationLock) {
@@ -410,7 +410,7 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
         fun notifyAllConnectedDevices(): Boolean = false
 
         fun onCharacteristicReadRequest(characteristic: BluetoothGattCharacteristic): ByteArray?
-        fun packetDataForSend(mtu: Int, data: ByteArray): List<ByteArray>
+        fun packetDataForSend(device: BluetoothDevice, mtu: Int, data: ByteArray): List<ByteArray>
         fun onIncomingData(
             device: BluetoothDevice,
             characteristic: BleCharacteristicInfo,

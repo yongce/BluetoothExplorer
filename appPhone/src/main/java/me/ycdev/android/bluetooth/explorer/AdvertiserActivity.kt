@@ -8,16 +8,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.ParcelUuid
 import android.view.View
-import android.widget.Button
 import android.widget.RadioButton
-import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import butterknife.BindView
-import butterknife.ButterKnife
-import butterknife.OnClick
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.ext.MagicPingServer
 import me.ycdev.android.bluetooth.ble.ext.MagicRadioServer
@@ -26,6 +20,7 @@ import me.ycdev.android.bluetooth.ble.server.BleAdvertiserSimple
 import me.ycdev.android.bluetooth.ble.sig.BatteryServiceServer
 import me.ycdev.android.bluetooth.ble.sig.TimeServiceServer
 import me.ycdev.android.bluetooth.explorer.ble.BleConstants
+import me.ycdev.android.bluetooth.explorer.databinding.ActivityAdvertiserBinding
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -33,15 +28,12 @@ import java.util.Locale
 import java.util.Objects
 
 class AdvertiserActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityAdvertiserBinding
+
     private var bleAdvertiser: BleAdvertiser? = null
     private val advertiserCallback = MyAdvertiseCallback()
 
     private lateinit var selectedFilterCheckBox: RadioButton
-
-    @BindView(R2.id.advertise_btn)
-    internal lateinit var advertiseBtn: Button
-    @BindView(R2.id.status)
-    internal lateinit var statusView: TextView
 
     private val timestampFormatter = SimpleDateFormat("dd-HH:mm:ss", Locale.US)
 
@@ -51,31 +43,39 @@ class AdvertiserActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_advertiser)
+        binding = ActivityAdvertiserBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
+        setSupportActionBar(binding.toolbar)
         Objects.requireNonNull<ActionBar>(supportActionBar).setDisplayHomeAsUpEnabled(true)
 
         initContentViews()
     }
 
     private fun initContentViews() {
-        ButterKnife.bind(this)
-
         // Hide the "all" option
-        findViewById<View>(R.id.filter_all).visibility = View.GONE
-        selectedFilterCheckBox = findViewById(R.id.filter_magic_ping)
+        binding.content.filters.all.visibility = View.GONE
+        selectedFilterCheckBox = binding.content.filters.magicPing
         selectedFilterCheckBox.isChecked = true
 
+        binding.content.filters.magicWw.setOnClickListener { onCheckboxClick(it) }
+        binding.content.filters.magicPing.setOnClickListener { onCheckboxClick(it) }
+        binding.content.filters.magicRadio.setOnClickListener { onCheckboxClick(it) }
+        binding.content.filters.gfpService.setOnClickListener { onCheckboxClick(it) }
+        binding.content.filters.mfpService.setOnClickListener { onCheckboxClick(it) }
+        binding.content.filters.timeService.setOnClickListener { onCheckboxClick(it) }
+        binding.content.filters.batteryService.setOnClickListener { onCheckboxClick(it) }
+
         addStatusLog(getString(R.string.ble_status_init))
+
+        binding.content.advertiseBtn.setOnClickListener { onAdvertiseButtonClick() }
     }
 
     private fun updateContentViews() {
         if (bleAdvertiser?.isAdvertising() == true) {
-            advertiseBtn.setText(R.string.ble_advertiser_stop)
+            binding.content.advertiseBtn.setText(R.string.ble_advertiser_stop)
         } else {
-            advertiseBtn.setText(R.string.ble_advertiser_start)
+            binding.content.advertiseBtn.setText(R.string.ble_advertiser_start)
         }
     }
 
@@ -83,8 +83,8 @@ class AdvertiserActivity : AppCompatActivity() {
     private fun addStatusLog(status: CharSequence) {
         Timber.tag(TAG).d("Status changed: %s", status)
         val timestamp = timestampFormatter.format(Date(System.currentTimeMillis()))
-        val oldStatus = statusView.text
-        statusView.text = "$timestamp $status\n\n$oldStatus"
+        val oldStatus = binding.content.status.text
+        binding.content.status.text = "$timestamp $status\n\n$oldStatus"
     }
 
     private fun addStatusLog(@StringRes resId: Int, vararg formatArgs: Any) {
@@ -133,11 +133,11 @@ class AdvertiserActivity : AppCompatActivity() {
     private fun startAdvertising() {
         addStatusLog(R.string.ble_status_advertise_initiated, selectedFilterCheckBox.text)
         when (selectedFilterCheckBox.id) {
-            R.id.filter_magic_ww -> advertiseForMagicWw()
-            R.id.filter_magic_ping -> advertiseForMagicPing()
-            R.id.filter_magic_radio -> advertiseForMagicRadio()
-            R.id.filter_time_service -> advertiseForTimeService()
-            R.id.filter_battery_service -> advertiseForBatteryService()
+            R.id.magic_ww -> advertiseForMagicWw()
+            R.id.magic_ping -> advertiseForMagicPing()
+            R.id.magic_radio -> advertiseForMagicRadio()
+            R.id.time_service -> advertiseForTimeService()
+            R.id.battery_service -> advertiseForBatteryService()
         }
     }
 
@@ -148,8 +148,7 @@ class AdvertiserActivity : AppCompatActivity() {
         }
     }
 
-    @OnClick(R2.id.advertise_btn)
-    internal fun onAdvertiseButtonClick() {
+    private fun onAdvertiseButtonClick() {
         if (!BluetoothHelper.isBluetoothEnabled(this)) {
             BluetoothHelper.startBluetoothSysUI(this,
                 RC_BT_ENABLE
@@ -168,16 +167,7 @@ class AdvertiserActivity : AppCompatActivity() {
         updateContentViews()
     }
 
-    @OnClick(
-        R2.id.filter_magic_ww,
-        R2.id.filter_magic_ping,
-        R2.id.filter_magic_radio,
-        R2.id.filter_gfp_service,
-        R2.id.filter_mfp_service,
-        R2.id.filter_time_service,
-        R2.id.filter_battery_service
-    )
-    fun onCheckboxClick(v: View) {
+    private fun onCheckboxClick(v: View) {
         if (v != selectedFilterCheckBox) {
             selectedFilterCheckBox.isChecked = false
             selectedFilterCheckBox = v as RadioButton
@@ -185,6 +175,7 @@ class AdvertiserActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_BT_ENABLE) {
             if (BluetoothHelper.isBluetoothEnabled(this)) {
                 onAdvertiseButtonClick()

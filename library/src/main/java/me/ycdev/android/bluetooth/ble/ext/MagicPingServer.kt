@@ -57,6 +57,12 @@ class MagicPingServer(context: Context) : BleGattServerBase(TAG, context) {
         getPacketsWorker(device).parsePackets(value)
     }
 
+    override fun packetDataForSend(device: BluetoothDevice, mtu: Int, data: ByteArray): List<ByteArray> {
+        val packetsWorker = getPacketsWorker(device)
+        packetsWorker.maxPacketSize = mtu
+        return packetsWorker.packetData(data)
+    }
+
     inner class MyParserCallback(val device: BluetoothDevice) : PacketsWorker.ParserCallback {
         override fun onDataParsed(data: ByteArray) {
             val pingMessage = String(data)

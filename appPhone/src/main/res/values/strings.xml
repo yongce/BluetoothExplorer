@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">BleDemo</string>
+    <string name="app_name" translatable="false">Bluetooth Explorer</string>
 
     <string name="navigation_drawer_open" translatable="false">Open navigation drawer</string>
     <string name="navigation_drawer_close" translatable="false">Close navigation drawer</string>

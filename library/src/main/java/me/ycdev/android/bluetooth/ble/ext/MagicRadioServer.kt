@@ -65,7 +65,7 @@ class MagicRadioServer(context: Context) : BleGattServerBase(
     override fun start(resultCallback: ((Boolean) -> Unit)?) {
         super.start { success ->
             if (success) {
-                taskScheduler.schedulePeriod({
+                taskScheduler.schedulePeriod(Runnable {
                     val fmOneData = getFmOneData()
                     val fmTwoData = getFmTwoData()
 
