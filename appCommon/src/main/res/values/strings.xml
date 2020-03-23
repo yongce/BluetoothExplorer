@@ -46,5 +46,5 @@
 
     <string name="ble_paired_viewer">Paired Devices</string>
     <string name="ble_paired_viewer_refresh">Refresh</string>
-    <string name="ble_paired_viewer_status">%1$s There are %2$s bonded devices</string>
+    <string name="ble_paired_viewer_status">%1$s There are %2$d bonded devices</string>
 </resources>

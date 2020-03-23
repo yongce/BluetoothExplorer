@@ -122,12 +122,12 @@ class PairedDevicesActivity : AppCompatActivity() {
             MyDiffItemCallback()
         ) {
 
-        private val mInflater: LayoutInflater = LayoutInflater.from(context)
-        private val mUnknownDeviceName: String = context.getString(R.string.ble_unknown_device)
+        private val inflater: LayoutInflater = LayoutInflater.from(context)
+        private val unknownDeviceName: String = context.getString(R.string.ble_unknown_device)
 
         @NonNull
         override fun onCreateViewHolder(@NonNull parent: ViewGroup, viewType: Int): MyViewHolder {
-            val itemView = mInflater.inflate(R.layout.devices_list_item, parent, false)
+            val itemView = inflater.inflate(R.layout.devices_list_item, parent, false)
             return MyViewHolder(itemView)
         }
 
@@ -135,7 +135,7 @@ class PairedDevicesActivity : AppCompatActivity() {
             val item = getItem(position)
             var name = item.name
             if (TextUtils.isEmpty(name)) {
-                name = mUnknownDeviceName
+                name = unknownDeviceName
             }
             holder.binding.name.text = name
             holder.binding.address.text = item.address
