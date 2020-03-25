@@ -1,12 +1,15 @@
 package me.ycdev.android.bluetooth.ble
 
+import android.os.Build
 import com.google.common.truth.Truth.assertThat
 import me.ycdev.android.lib.common.utils.EncodingUtils.fromHexString
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.P])
 class BleAdvertiseDataTest {
     @Test
     fun parse_case1() {

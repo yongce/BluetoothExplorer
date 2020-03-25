@@ -21,6 +21,7 @@ dependencies {
     testImplementation deps.test.junit
     testImplementation deps.test.truth
     testImplementation deps.test.mockk
+    testImplementation deps.test.robolectric
     testImplementation deps.ycdev.androidTest
 
     // AndroidJUnitRunner and JUnit Rules
