@@ -1,7 +1,13 @@
-rootProject.name = 'BluetoothExplorer'
+rootProject.name = 'BluetoothExplorerProject'
 
-include ':library'
+include ':bluetoothLib'
+project(':bluetoothLib').projectDir = new File('library')
 
-include ':appCommon'
-include ':appPhone'
-include ':appWear'
+include ':bluetoothCommon'
+project(':bluetoothCommon').projectDir = new File('appCommon')
+
+include ':bluetoothPhone'
+project(':bluetoothPhone').projectDir = new File('appPhone')
+
+include ':bluetoothWear'
+project(':bluetoothWear').projectDir = new File('appWear')

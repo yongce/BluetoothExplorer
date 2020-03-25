@@ -12,7 +12,7 @@ android {
 }
 
 dependencies {
-    api project(':library')
+    api project(':bluetoothLib')
 
     implementation deps.kotlin.stdlib
     implementation deps.androidx.appcompat
