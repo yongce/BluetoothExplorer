@@ -7,8 +7,8 @@ import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import androidx.annotation.AnyThread
 import androidx.annotation.WorkerThread
-import me.ycdev.android.bluetooth.ble.BleConfigs
 import me.ycdev.android.bluetooth.BluetoothHelper
+import me.ycdev.android.bluetooth.ble.BleConfigs
 import timber.log.Timber
 
 class BleAdvertiserSimple(context: Context) : BleAdvertiser {

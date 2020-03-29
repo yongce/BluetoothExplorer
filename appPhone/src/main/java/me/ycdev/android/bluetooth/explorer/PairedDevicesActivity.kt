@@ -17,12 +17,12 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Objects
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.explorer.databinding.ActivityPairedDevicesBinding
 import me.ycdev.android.bluetooth.explorer.databinding.DevicesListItemBinding
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
-import java.util.Objects
 
 class PairedDevicesActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPairedDevicesBinding

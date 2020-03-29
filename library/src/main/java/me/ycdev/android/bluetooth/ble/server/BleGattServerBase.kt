@@ -7,13 +7,13 @@ import android.bluetooth.BluetoothGattService
 import android.content.Context
 import androidx.annotation.AnyThread
 import androidx.annotation.CallSuper
+import java.util.UUID
 import me.ycdev.android.bluetooth.ble.BleCharacteristicInfo
 import me.ycdev.android.bluetooth.ble.BleConfigs
 import me.ycdev.android.bluetooth.ble.server.BlePeripheralHelper.Contract
 import me.ycdev.android.lib.common.utils.EncodingUtils.encodeWithHex
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
-import java.util.UUID
 
 abstract class BleGattServerBase(val ownerTag: String, val context: Context) : BleAdvertiser,
     Contract {

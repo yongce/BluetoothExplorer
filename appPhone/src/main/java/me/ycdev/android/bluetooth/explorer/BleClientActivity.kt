@@ -12,6 +12,10 @@ import android.view.View
 import androidx.annotation.StringRes
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.Objects
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.client.BleGattClientBase
 import me.ycdev.android.bluetooth.ble.client.BleGattClientSimple
@@ -21,10 +25,6 @@ import me.ycdev.android.bluetooth.ble.ext.MagicRadioClient
 import me.ycdev.android.bluetooth.ble.sig.BatteryServiceClient
 import me.ycdev.android.bluetooth.explorer.databinding.ActivityBleClientBinding
 import timber.log.Timber
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.Objects
 
 class BleClientActivity : AppCompatActivity() {
     private lateinit var binding: ActivityBleClientBinding

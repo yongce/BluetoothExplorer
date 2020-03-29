@@ -13,6 +13,10 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import androidx.annotation.WorkerThread
+import java.nio.ByteBuffer
+import java.util.Arrays
+import java.util.UUID
+import kotlin.math.max
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.BleCharacteristicInfo
 import me.ycdev.android.bluetooth.ble.BleConfigs
@@ -21,10 +25,6 @@ import me.ycdev.android.bluetooth.ble.internal.BleGattHelperBase.Operation.ADD_S
 import me.ycdev.android.bluetooth.ble.internal.BleGattHelperBase.Operation.WRITE_CHARACTERISTIC
 import me.ycdev.android.lib.common.utils.EncodingUtils.encodeWithHex
 import timber.log.Timber
-import java.nio.ByteBuffer
-import java.util.Arrays
-import java.util.UUID
-import kotlin.math.max
 
 internal class BlePeripheralHelper(val context: Context, val contract: Contract) : BleGattHelperBase() {
     private val bleAdvertiser = BleAdvertiserSimple(context)

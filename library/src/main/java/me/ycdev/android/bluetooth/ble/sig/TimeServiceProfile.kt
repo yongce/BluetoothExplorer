@@ -19,7 +19,6 @@ package me.ycdev.android.bluetooth.ble.sig
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
-
 import java.util.Calendar
 import java.util.UUID
 

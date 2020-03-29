@@ -6,9 +6,9 @@ import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import android.os.ParcelUuid
+import kotlin.random.Random
 import me.ycdev.android.bluetooth.ble.server.BleGattServerBase
 import timber.log.Timber
-import kotlin.random.Random
 
 open class BatteryServiceServer(context: Context) : BleGattServerBase(
     TAG, context) {

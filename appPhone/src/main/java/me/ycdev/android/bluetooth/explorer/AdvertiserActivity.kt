@@ -12,6 +12,10 @@ import android.widget.RadioButton
 import androidx.annotation.StringRes
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.Objects
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.ext.MagicPingServer
 import me.ycdev.android.bluetooth.ble.ext.MagicRadioServer
@@ -22,10 +26,6 @@ import me.ycdev.android.bluetooth.ble.sig.TimeServiceServer
 import me.ycdev.android.bluetooth.explorer.ble.BleConstants
 import me.ycdev.android.bluetooth.explorer.databinding.ActivityAdvertiserBinding
 import timber.log.Timber
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.Objects
 
 class AdvertiserActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAdvertiserBinding

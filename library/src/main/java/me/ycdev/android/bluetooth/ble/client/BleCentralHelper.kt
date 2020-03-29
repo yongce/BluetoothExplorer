@@ -11,10 +11,11 @@ import android.content.Context
 import android.os.Build
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
-import me.ycdev.android.bluetooth.ble.BleCharacteristicInfo
-import me.ycdev.android.bluetooth.ble.BleConfigs
+import java.util.UUID
 import me.ycdev.android.bluetooth.BluetoothException
 import me.ycdev.android.bluetooth.BluetoothHelper
+import me.ycdev.android.bluetooth.ble.BleCharacteristicInfo
+import me.ycdev.android.bluetooth.ble.BleConfigs
 import me.ycdev.android.bluetooth.ble.client.ClientState.CONNECTED
 import me.ycdev.android.bluetooth.ble.client.ClientState.CONNECTING
 import me.ycdev.android.bluetooth.ble.client.ClientState.DISCONNECTED
@@ -27,7 +28,6 @@ import me.ycdev.android.bluetooth.ble.internal.BleGattHelperBase.Operation.WRITE
 import me.ycdev.android.lib.common.utils.EncodingUtils.encodeWithHex
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
-import java.util.UUID
 
 internal class BleCentralHelper(val context: Context, val contract: Contract) : BleGattHelperBase() {
     private val gattCallback = MyGattCallback()

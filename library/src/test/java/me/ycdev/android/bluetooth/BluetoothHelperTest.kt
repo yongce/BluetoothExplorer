@@ -1,8 +1,8 @@
 package me.ycdev.android.bluetooth
 
 import com.google.common.truth.Truth.assertThat
-import org.junit.Test
 import java.util.UUID
+import org.junit.Test
 
 class BluetoothHelperTest {
     @Test

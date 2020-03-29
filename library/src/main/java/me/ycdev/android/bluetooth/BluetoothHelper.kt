@@ -10,9 +10,9 @@ import android.bluetooth.le.ScanCallback
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import java.util.Locale
 import me.ycdev.android.lib.common.utils.EncodingUtils.fromHexString
 import timber.log.Timber
-import java.util.Locale
 
 object BluetoothHelper {
     private const val TAG = "BluetoothHelper"

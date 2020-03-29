@@ -3,12 +3,12 @@ package me.ycdev.android.bluetooth.ble.internal
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.os.SystemClock
-import me.ycdev.android.bluetooth.ble.BleConfigs
+import java.util.UUID
 import me.ycdev.android.bluetooth.BluetoothException
 import me.ycdev.android.bluetooth.BluetoothHelper
+import me.ycdev.android.bluetooth.ble.BleConfigs
 import me.ycdev.android.bluetooth.ble.internal.BleGattHelperBase.Operation.NO_OP
 import timber.log.Timber
-import java.util.UUID
 
 internal open class BleGattHelperBase {
     var operationTimeout: Long =

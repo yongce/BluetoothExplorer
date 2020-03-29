@@ -20,6 +20,12 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import java.text.SimpleDateFormat
+import java.util.Collections
+import java.util.Comparator
+import java.util.Date
+import java.util.Locale
+import java.util.Objects
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.BleAdvertiseData.Parser
 import me.ycdev.android.bluetooth.ble.client.BleScanner
@@ -43,12 +49,6 @@ import me.ycdev.android.lib.common.perms.PermissionCallback
 import me.ycdev.android.lib.common.perms.PermissionUtils
 import me.ycdev.android.lib.common.utils.EncodingUtils.encodeWithHex
 import timber.log.Timber
-import java.text.SimpleDateFormat
-import java.util.Collections
-import java.util.Comparator
-import java.util.Date
-import java.util.Locale
-import java.util.Objects
 
 class BleScannerActivity : AppCompatActivity(), View.OnClickListener, PermissionCallback,
     BleScanner.ScanListener {

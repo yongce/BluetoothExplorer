@@ -8,8 +8,8 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import androidx.annotation.MainThread
-import me.ycdev.android.bluetooth.ble.BleConfigs
 import me.ycdev.android.bluetooth.BluetoothHelper
+import me.ycdev.android.bluetooth.ble.BleConfigs
 import me.ycdev.android.lib.common.perms.PermissionUtils
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
