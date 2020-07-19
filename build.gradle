@@ -11,7 +11,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.6.1'
+        classpath 'com.android.tools.build:gradle:4.0.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
         classpath "com.jakewharton:butterknife-gradle-plugin:${versions.butterknife}"
 
@@ -22,7 +22,7 @@ buildscript {
 
 // Add plugin for 'spotless'
 plugins {
-    id "com.diffplug.gradle.spotless" version "3.27.1"
+    id "com.diffplug.spotless" version "5.1.0"
 }
 
 allprojects {
