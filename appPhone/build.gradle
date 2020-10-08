@@ -14,7 +14,7 @@ android {
         targetSdkVersion 30
     }
 
-    viewBinding.enabled = true
+    buildFeatures.viewBinding = true
 
     buildTypes {
         release {

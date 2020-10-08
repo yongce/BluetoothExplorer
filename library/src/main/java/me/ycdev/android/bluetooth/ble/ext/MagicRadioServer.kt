@@ -5,9 +5,10 @@ import android.bluetooth.BluetoothGattService
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
+import android.os.Looper
 import android.os.ParcelUuid
 import me.ycdev.android.bluetooth.ble.server.BleGattServerBase
-import me.ycdev.android.lib.common.async.HandlerExecutor
+import me.ycdev.android.lib.common.async.HandlerTaskExecutor
 import me.ycdev.android.lib.common.async.TaskScheduler
 import me.ycdev.android.lib.common.type.IntegerHolder
 import timber.log.Timber
@@ -15,9 +16,8 @@ import timber.log.Timber
 class MagicRadioServer(context: Context) : BleGattServerBase(
     TAG, context) {
     private val messageId = IntegerHolder(0)
-    private val taskScheduler = TaskScheduler(HandlerExecutor.withMainLooper(),
-        TAG
-    )
+    private val taskScheduler = TaskScheduler(Looper.getMainLooper(), TAG)
+    private val taskExecutor = HandlerTaskExecutor.withMainLooper()
 
     override fun buildAdvertiseSettings(): AdvertiseSettings {
         return AdvertiseSettings.Builder()
@@ -65,7 +65,7 @@ class MagicRadioServer(context: Context) : BleGattServerBase(
     override fun start(resultCallback: ((Boolean) -> Unit)?) {
         super.start { success ->
             if (success) {
-                taskScheduler.schedulePeriod(Runnable {
+                taskScheduler.schedulePeriod(taskExecutor, 0, MESSAGES_INTERVAL) {
                     val fmOneData = getFmOneData()
                     val fmTwoData = getFmTwoData()
 
@@ -85,9 +85,7 @@ class MagicRadioServer(context: Context) : BleGattServerBase(
                             fmTwoData
                         )
                     }
-                }, 0,
-                    MESSAGES_INTERVAL
-                )
+                }
             }
             if (resultCallback != null) {
                 resultCallback(success)

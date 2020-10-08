@@ -4,11 +4,12 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattService
 import android.content.Context
+import android.os.Looper
 import me.ycdev.android.bluetooth.ble.BleCharacteristicInfo
 import me.ycdev.android.bluetooth.ble.client.BleGattClientBase
 import me.ycdev.android.bluetooth.ble.client.ClientState
 import me.ycdev.android.bluetooth.ble.client.ClientState.DISCONNECTED
-import me.ycdev.android.lib.common.async.HandlerExecutor
+import me.ycdev.android.lib.common.async.HandlerTaskExecutor
 import me.ycdev.android.lib.common.async.TaskScheduler
 import me.ycdev.android.lib.common.packets.PacketsWorker
 import me.ycdev.android.lib.common.packets.TinyPacketsWorker
@@ -18,7 +19,8 @@ import timber.log.Timber
 class MagicPingClient(context: Context) : BleGattClientBase(TAG, context), PacketsWorker.ParserCallback {
     private val packetsWorker = TinyPacketsWorker(this)
     private val messageId = IntegerHolder(0)
-    private val taskScheduler = TaskScheduler(HandlerExecutor.withMainLooper(), TAG)
+    private val taskScheduler = TaskScheduler(Looper.getMainLooper(), TAG)
+    private val taskExecutor = HandlerTaskExecutor.withMainLooper()
 
     init {
         setOperationTimeout(MagicPingProfile.BLE_OPERATION_TIMEOUT)
@@ -87,9 +89,9 @@ class MagicPingClient(context: Context) : BleGattClientBase(TAG, context), Packe
     private fun schedulePingTask() {
         Timber.tag(TAG).d("schedule ping task")
         taskScheduler.clear()
-        taskScheduler.schedulePeriod(Runnable {
+        taskScheduler.schedulePeriod(taskExecutor, 0, PING_INTERVAL) {
             sendPingMessage()
-        }, 0, PING_INTERVAL)
+        }
     }
 
     private fun getPingData(): ByteArray {

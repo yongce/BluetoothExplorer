@@ -318,11 +318,10 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
                     deviceBuffer = hashMapOf()
                     writerBuffer[device.address] = deviceBuffer
                 }
-                var buffer = deviceBuffer[characteristicInfo]
-                if (buffer == null) {
-                    buffer = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE)!!
-                    deviceBuffer[characteristicInfo] = buffer
-                }
+                val buffer = deviceBuffer[characteristicInfo]
+                    ?: ByteBuffer.allocate(DEFAULT_BUFFER_SIZE).also {
+                        deviceBuffer[characteristicInfo] = it
+                    }
 
                 if (buffer.remaining() >= value.size) {
                     buffer.put(value)
