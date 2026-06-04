@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: 'kotlin-kapt'
 apply from: "${androidModuleCommon}"
 
 android {
+    namespace "me.ycdev.android.bluetooth.explorer"
+
     defaultConfig {
         applicationId "me.ycdev.android.bluetooth.explorer"
         versionCode 1
@@ -14,7 +14,10 @@ android {
         targetSdkVersion 30
     }
 
-    buildFeatures.viewBinding = true
+    buildFeatures {
+        buildConfig = true
+        viewBinding = true
+    }
 
     buildTypes {
         release {
@@ -46,15 +49,10 @@ dependencies {
     implementation deps.androidx.material
     implementation deps.androidx.constraintLayout
 
-    implementation deps.timber
-    implementation deps.ycdev.androidBase
-    implementation deps.flexbox
-
     testImplementation deps.test.core
     testImplementation deps.test.junit
     testImplementation deps.test.truth
     testImplementation deps.test.mockk
-    testImplementation deps.ycdev.androidTest
 
     // AndroidJUnitRunner and JUnit Rules
     androidTestImplementation deps.test.runner

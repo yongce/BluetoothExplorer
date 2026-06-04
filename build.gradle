@@ -7,44 +7,31 @@ buildscript {
 
     repositories {
         google()
+        mavenCentral()
         jcenter()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
+        classpath 'com.android.tools.build:gradle:8.3.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
-
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
-}
-
-// Add plugin for 'spotless'
-plugins {
-    id "com.diffplug.spotless" version "5.1.0"
 }
 
 allprojects {
     repositories {
         google()
+        mavenCentral()
         jcenter()
     }
 }
 
-clean {
-    delete rootProject.buildDir
-}
-
-spotless {
-    kotlin {
-        target "**/*.kt"
-        ktlint(versions.ktlint)
-    }
+tasks.register("clean", Delete) {
+    delete rootProject.layout.buildDirectory
 }
 
 ext {
     // For bintray upload
-    bintrayUploadEnabled = true
+    bintrayUploadEnabled = false
     bintrayMaven = [
             'projectRepo': 'android',
             'projectUrl': 'https://github.com/yongce/BluetoothExplorer',

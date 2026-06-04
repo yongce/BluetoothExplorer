@@ -1,10 +1,10 @@
 package me.ycdev.android.bluetooth.explorer
 
 import android.os.Bundle
-import android.support.wearable.activity.WearableActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.widget.TextView
 
-class MainActivity : WearableActivity() {
+class MainActivity : AppCompatActivity() {
 
     private var mTextView: TextView? = null
 
@@ -14,7 +14,5 @@ class MainActivity : WearableActivity() {
 
         mTextView = findViewById(R.id.text)
 
-        // Enables Always-on
-        setAmbientEnabled()
     }
 }

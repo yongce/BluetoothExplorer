@@ -1,11 +1,12 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 apply from: "${androidModuleCommon}"
 
 project.archivesBaseName = 'ble-common'
 
 android {
+    namespace "me.ycdev.android.bluetooth.common"
+
     defaultConfig {
         minSdkVersion 23
     }
@@ -14,15 +15,11 @@ android {
 dependencies {
     implementation deps.kotlin.stdlib
 
-    implementation deps.timber
-    implementation deps.ycdev.androidBase
-
     testImplementation deps.test.core
     testImplementation deps.test.junit
     testImplementation deps.test.truth
     testImplementation deps.test.mockk
     testImplementation deps.test.robolectric
-    testImplementation deps.ycdev.androidTest
 
     // AndroidJUnitRunner and JUnit Rules
     androidTestImplementation deps.test.runner
