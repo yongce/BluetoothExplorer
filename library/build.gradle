@@ -36,7 +36,4 @@ project.ext {
     moduleDesc = 'BLE common library for Android'
 }
 
-if (bintrayUploadEnabled) {
-    apply from: rootProject.file('bintray-install.gradle')
-    apply from: rootProject.file('bintray-upload.gradle')
-}
+apply from: rootProject.file('maven-publish.gradle')

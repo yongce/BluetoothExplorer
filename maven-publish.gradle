@@ -1,0 +1,64 @@
+apply plugin: 'maven-publish'
+
+group = mavenPublish.groupId
+version = mavenPublish.version
+
+android {
+    publishing {
+        singleVariant('release')
+    }
+}
+
+tasks.register('androidSourcesJar', Jar) {
+    archiveClassifier.set('sources')
+    from android.sourceSets.main.java.srcDirs
+}
+
+tasks.register('androidJavadocsJar', Jar) {
+    archiveClassifier.set('javadoc')
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                artifact tasks.named('androidSourcesJar')
+                artifact tasks.named('androidJavadocsJar')
+
+                groupId = mavenPublish.groupId
+                artifactId = project.ext.archivesBaseName
+                version = mavenPublish.version
+
+                pom {
+                    name = project.ext.moduleName
+                    description = project.ext.moduleDesc
+                    url = mavenPublish.projectUrl
+                    inceptionYear = mavenPublish.projectInceptionYear
+
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution = 'repo'
+                        }
+                    }
+
+                    scm {
+                        url = mavenPublish.projectUrl
+                        connection = mavenPublish.projectScmConnection
+                        developerConnection = mavenPublish.projectScmDevConnection
+                    }
+
+                    developers {
+                        developer {
+                            id = mavenPublish.developerId
+                            name = mavenPublish.developerName
+                            email = mavenPublish.developerEmail
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

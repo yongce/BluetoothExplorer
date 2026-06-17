@@ -28,10 +28,7 @@ tasks.register("clean", Delete) {
 }
 
 ext {
-    // For bintray upload
-    bintrayUploadEnabled = false
-    bintrayMaven = [
-            'projectRepo': 'android',
+    mavenPublish = [
             'projectUrl': 'https://github.com/yongce/BluetoothExplorer',
             'projectScmConnection': 'https://github.com/yongce/BluetoothExplorer.git',
             'projectScmDevConnection': 'ssh://git@github.com/yongce/BluetoothExplorer.git',
