@@ -54,7 +54,7 @@ ext {
 }
 
 android {
-    compileSdk versions.compileSdk
+    compileSdk = versions.compileSdk
 
     defaultConfig {
         manifestPlaceholders = [
@@ -84,14 +84,14 @@ android {
 
         buildTypes {
             debug {
-                signingConfig signingConfigs.androidTestKey
+                signingConfig = signingConfigs.androidTestKey
             }
 
             release {
-                signingConfig signingConfigs.androidTestKey
+                signingConfig = signingConfigs.androidTestKey
 
                 minifyEnabled true
-                proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+                proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             }
         }
 
@@ -99,26 +99,19 @@ android {
 
     lint {
         textReport = true
-        textOutput = file("stdout")
-
         abortOnError = true
         ignoreWarnings = isIgnoreLintWarnings()
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    pluginManager.withPlugin('kotlin-android') {
-        kotlinOptions {
-            jvmTarget = "1.8"
-        }
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     testOptions {
         unitTests.all {
-            // All the usual Gradle options.
+            systemProperty "robolectric.enabledSdks", "34"
+
             testLogging {
                 events "passed", "skipped", "failed", "standardOut", "standardError"
                 outputs.upToDateWhen {false}
@@ -128,25 +121,6 @@ android {
 
         unitTests {
             includeAndroidResources = true
-        }
-    }
-}
-
-if (project.plugins.hasPlugin("com.android.library")) {
-    tasks.configureEach { task ->
-        if (task.name.startsWith("extract") && task.name.endsWith("Annotations")) {
-            task.enabled = false
-        }
-        if (task.name.startsWith("sync") && task.name.endsWith("LibJars")) {
-            def variantName = task.name
-                    .replaceFirst("^sync", "")
-                    .replaceFirst("LibJars\$", "")
-            def variantDir = variantName.substring(0, 1).toLowerCase(Locale.US) + variantName.substring(1)
-            def typedefs = file("${buildDir}/intermediates/annotations_typedef_file/${variantDir}/extract${variantName}Annotations/typedefs.txt")
-            typedefs.parentFile.mkdirs()
-            if (!typedefs.exists()) {
-                typedefs.text = ""
-            }
         }
     }
 }

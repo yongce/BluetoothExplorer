@@ -131,7 +131,7 @@ object BluetoothHelper {
             BluetoothProfile.GATT -> "GATT"
             BluetoothProfile.GATT_SERVER -> "GATT_SERVER"
             BluetoothProfile.HEADSET -> "HEADSET"
-            BluetoothProfile.HEALTH -> "HEALTH"
+            PROFILE_HEALTH -> "HEALTH"
             else -> "Profile-$profile"
         }
     }
@@ -151,4 +151,6 @@ object BluetoothHelper {
 
         return fromHexString(address.replace(":", ""))
     }
+
+    private const val PROFILE_HEALTH = 3
 }

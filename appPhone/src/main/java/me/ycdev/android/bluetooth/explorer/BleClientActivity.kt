@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.StringRes
@@ -48,7 +49,7 @@ class BleClientActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         Objects.requireNonNull<ActionBar>(supportActionBar).setDisplayHomeAsUpEnabled(true)
 
-        device = intent.getParcelableExtra(EXTRA_DEVICE)
+        device = intent.getBluetoothDeviceExtra(EXTRA_DEVICE)
         if (device == null) {
             Timber.tag(TAG).e("No device specified to connect")
             finish()
@@ -208,7 +209,7 @@ class BleClientActivity : AppCompatActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
             if (BluetoothDevice.ACTION_BOND_STATE_CHANGED == action) {
-                val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE) as BluetoothDevice
+                val device = intent.getBluetoothDeviceExtra(BluetoothDevice.EXTRA_DEVICE) ?: return
                 val state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
                 addStatusLog(
                     R.string.ble_status_client_pair_state_changed,
@@ -254,4 +255,13 @@ class BleClientActivity : AppCompatActivity() {
         const val EXTRA_DEVICE = "extra.device"
         const val EXTRA_CLIENT_TYPE = "extra.client_type"
     }
+}
+
+private fun Intent.getBluetoothDeviceExtra(name: String): BluetoothDevice? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return getParcelableExtra(name, BluetoothDevice::class.java)
+    }
+
+    @Suppress("DEPRECATION")
+    return getParcelableExtra(name)
 }

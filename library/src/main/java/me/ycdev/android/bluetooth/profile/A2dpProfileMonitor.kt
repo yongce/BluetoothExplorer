@@ -4,10 +4,10 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothProfile
 import android.content.Context
-import me.ycdev.android.lib.common.utils.WeakListenerManager
+import me.ycdev.android.lib.common.manager.ListenerManager
 
 class A2dpProfileMonitor private constructor(val context: Context) :
-    WeakListenerManager<BluetoothProfileListener>() {
+    ListenerManager<BluetoothProfileListener>(true) {
 
     private var profileHelper: BluetoothProfileHelper<BluetoothA2dp>
 

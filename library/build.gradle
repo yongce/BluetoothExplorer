@@ -1,19 +1,22 @@
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 apply from: "${androidModuleCommon}"
 
-project.archivesBaseName = 'ble-common'
+project.ext.archivesBaseName = 'ble-common'
 
 android {
-    namespace "me.ycdev.android.bluetooth.common"
+    namespace = "me.ycdev.android.bluetooth.common"
 
     defaultConfig {
-        minSdkVersion 23
+        minSdk = 24
     }
 }
 
 dependencies {
+    api deps.ycdev.androidBase
+    api deps.androidx.annotation
+
     implementation deps.kotlin.stdlib
+    implementation deps.timber
 
     testImplementation deps.test.core
     testImplementation deps.test.junit

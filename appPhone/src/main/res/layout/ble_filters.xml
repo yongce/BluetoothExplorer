@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<com.google.android.flexbox.FlexboxLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/filters"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="10dp"
-    android:orientation="vertical"
+    app:alignItems="flex_start"
+    app:flexWrap="wrap"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent">
     <RadioButton
@@ -55,4 +56,4 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ble_filter_tp2" />
-</LinearLayout>
+</com.google.android.flexbox.FlexboxLayout>

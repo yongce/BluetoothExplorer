@@ -8,10 +8,12 @@ import android.bluetooth.BluetoothGattServer
 import android.bluetooth.BluetoothGattServerCallback
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothProfile
+import android.bluetooth.BluetoothStatusCodes
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
+import android.os.Build
 import androidx.annotation.WorkerThread
 import java.nio.ByteBuffer
 import java.util.Arrays
@@ -162,7 +164,7 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
                     if (BleConfigs.bleDataLog) {
                         Timber.tag(TAG).v("Sending data [%s]", encodeWithHex(s))
                     }
-                    if (!characteristic.setValue(s) || !gatt.notifyCharacteristicChanged(device, characteristic, confirm)) {
+                    if (!notifyCharacteristicChanged(gatt, device, characteristic, confirm, s)) {
                         Timber.tag(TAG).w("Failed to write characteristic")
                         return
                     }
@@ -173,6 +175,26 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
         } catch (e: Exception) {
             Timber.tag(TAG).w("Failed to send data: %s", e.toString())
         }
+    }
+
+    private fun notifyCharacteristicChanged(
+        gatt: BluetoothGattServer,
+        device: BluetoothDevice,
+        characteristic: BluetoothGattCharacteristic,
+        confirm: Boolean,
+        value: ByteArray
+    ): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return gatt.notifyCharacteristicChanged(
+                device,
+                characteristic,
+                confirm,
+                value
+            ) == BluetoothStatusCodes.SUCCESS
+        }
+
+        @Suppress("DEPRECATION")
+        return characteristic.setValue(value) && gatt.notifyCharacteristicChanged(device, characteristic, confirm)
     }
 
     private inner class MyGattServerCallback : BluetoothGattServerCallback() {

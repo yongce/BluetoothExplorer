@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothProfile
+import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.os.Build
 import androidx.annotation.MainThread
@@ -63,12 +64,20 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
         }
 
         this.device = device
-        gatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        @Suppress("DEPRECATION")
+        gatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // The connect requesting will fail with the error "onClientConnectionState() - status=133"
             // when use BluetoothDevice#TRANSPORT_AUTO and the remote device is Android N or higher version.
-            device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+            device.connectGatt(
+                context,
+                false,
+                gattCallback,
+                BluetoothDevice.TRANSPORT_LE,
+                BluetoothDevice.PHY_LE_1M_MASK,
+                null
+            )
         } else {
-            device.connectGatt(context, false, gattCallback)
+            device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
         }
         return gatt != null
     }
@@ -191,11 +200,7 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
                     if (BleConfigs.bleDataLog) {
                         Timber.tag(TAG).v("Sending data [%s]", encodeWithHex(s))
                     }
-                    if (!characteristic.setValue(s)) {
-                        Timber.tag(TAG).w("Failed to set characteristic value")
-                        return
-                    }
-                    if (!curGatt.writeCharacteristic(characteristic)) {
+                    if (!writeCharacteristic(curGatt, characteristic, s)) {
                         Timber.tag(TAG).w("Failed to write characteristic")
                         return
                     }
@@ -206,6 +211,23 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
         } catch (e: Exception) {
             Timber.tag(TAG).w("Failed to send data: %s", e.toString())
         }
+    }
+
+    private fun writeCharacteristic(
+        gatt: BluetoothGatt,
+        characteristic: BluetoothGattCharacteristic,
+        value: ByteArray
+    ): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return gatt.writeCharacteristic(
+                characteristic,
+                value,
+                BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            ) == BluetoothStatusCodes.SUCCESS
+        }
+
+        @Suppress("DEPRECATION")
+        return characteristic.setValue(value) && gatt.writeCharacteristic(characteristic)
     }
 
     fun readData(serviceUuid: UUID, characteristicUUid: UUID, allServices: Boolean = false) {
@@ -310,25 +332,32 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
     private inner class MyGattCallback : BluetoothGattCallback() {
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
-            characteristic: BluetoothGattCharacteristic
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray
         ) {
-            // We must read the data right now. Otherwise it may be updated by next incoming data.
             val characteristicInfo = BleCharacteristicInfo.from(characteristic)
-            val data = characteristic.value
             if (BleConfigs.bleOperationLog) {
                 Timber.tag(TAG).d("onCharacteristicChanged: $characteristicInfo")
             }
-            contract.onCharacteristicChanged(gatt, characteristicInfo, data)
+            contract.onCharacteristicChanged(gatt, characteristicInfo, value)
+        }
+
+        @Deprecated("Deprecated by Android SDK")
+        @Suppress("DEPRECATION")
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic
+        ) {
+            onCharacteristicChanged(gatt, characteristic, characteristic.value)
         }
 
         override fun onCharacteristicRead(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
+            value: ByteArray,
             status: Int
         ) {
-            // We must read the data right now. Otherwise it may be updated by next incoming data.
             val characteristicInfo = BleCharacteristicInfo.from(characteristic)
-            val data = characteristic.value
             if (BleConfigs.bleOperationLog) {
                 Timber.tag(TAG).d(
                     "onCharacteristicRead: %s, status[%s]",
@@ -338,9 +367,19 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
             }
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 characteristic.service.instanceId
-                contract.onCharacteristicChanged(gatt, characteristicInfo, data)
+                contract.onCharacteristicChanged(gatt, characteristicInfo, value)
             }
             checkAndNotify(gatt, status, READ_CHARACTERISTIC, characteristic.uuid)
+        }
+
+        @Deprecated("Deprecated by Android SDK")
+        @Suppress("DEPRECATION")
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            status: Int
+        ) {
+            onCharacteristicRead(gatt, characteristic, characteristic.value, status)
         }
 
         override fun onCharacteristicWrite(
@@ -399,6 +438,7 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
             }
         }
 
+        @Deprecated("Deprecated by Android SDK")
         override fun onDescriptorRead(
             gatt: BluetoothGatt,
             descriptor: BluetoothGattDescriptor,

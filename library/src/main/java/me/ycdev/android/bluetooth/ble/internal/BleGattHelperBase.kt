@@ -17,6 +17,7 @@ internal open class BleGattHelperBase {
     private val defaultWorkspace =
         DeviceWorkspace()
     private val workspacesMapping = hashMapOf<BluetoothDevice, DeviceWorkspace>()
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     protected var operationLock = Object()
 
     protected fun getWorkspace(device: BluetoothDevice?): DeviceWorkspace {
