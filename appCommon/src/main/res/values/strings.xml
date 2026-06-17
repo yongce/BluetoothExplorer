@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ble_scan_perm_rationale">Location permission is required to scan the BLE devices.</string>
+    <string name="ble_scan_perm_rationale">Bluetooth permissions are required to scan BLE devices.</string>
 
     <string name="ble_scanner">BLE Scanner</string>
     <string name="ble_status_init">Ready to go</string>

@@ -7,6 +7,46 @@
 - Client/Server：Mi 5S，MIUI 10.2，Android 8.0
 - Server/Client：Nexus 5X，Android 8.1
 
+## 升级后真机验证清单
+
+建议至少准备两台设备，一台运行 Phone app 作为 client/scanner，另一台运行 Phone 或 Wear app 作为 advertiser/server。
+如条件允许，分别覆盖 Android 8-11 和 Android 12+ 设备，确认旧定位权限和新 Bluetooth 运行时权限都能正常工作。
+
+### 基础权限与开关
+
+- 首次进入 BLE Scanner，确认权限弹窗出现；Android 12+ 应请求 Bluetooth scan/connect 相关权限，Android 11 及以下应请求定位权限。
+- 拒绝权限后点击 Scan，不应崩溃，日志中应出现无 BLE scan 权限的提示。
+- 授予权限后关闭系统蓝牙，再点击 Scan/Connect/Advertise，应跳转系统蓝牙开启界面或给出状态提示，不应抛出 SecurityException。
+- 手动在系统设置中撤销 Nearby devices/Location 权限，再次执行扫描、连接、广播、断开连接，应用应保持可操作并输出权限不足日志。
+
+### 扫描与连接
+
+- 在 Server 设备启动 BLE Advertiser 后，Client 设备打开 BLE Scanner，确认能扫描到目标广播并能按 filter 切换结果。
+- 打开 Only named devices，确认无名称设备会被过滤；Android 12+ 设备名可能来自 scan record，不能依赖 BluetoothDevice#name 一定可读。
+- 选择目标设备进入 BLE Client，执行 Connect，确认状态依次进入 CONNECTING/CONNECTED，并完成 service discovery。
+- 执行 Read Data 和 Send Data，确认服务端能收到写入数据，客户端能收到读取或通知结果。
+- 执行 Disconnect/返回页面，重复连接 5 次，确认没有出现 “onClientRegistered - status=133 clientIf=0”。
+
+### 广播与 GATT server
+
+- 在 Advertiser 页面启动广播，确认日志中没有 BLUETOOTH_ADVERTISE 权限异常。
+- Client 连接后，Server 端应收到 BluetoothGattServerCallback#onConnectionStateChange。
+- Client 订阅通知后，Server 发送数据，确认 BluetoothGattServer#notifyCharacteristicChanged 成功并触发 onNotificationSent。
+- 关闭广播/GATT server 后重新启动，确认可以再次被扫描和连接。
+
+### 配对与地址变化
+
+- 对未配对设备执行 Pair，确认系统配对弹窗、配对状态广播、页面状态更新正常。
+- 配对后重新扫描，记录新旧 device address；如旧地址连接失败，重新扫描后使用新地址连接。
+- 取消配对后重新扫描并连接，确认不会因为旧缓存地址导致持续 GATT_ERROR。
+
+### 日志观察点
+
+- `No Bluetooth connect permission`、`No BLE scan permissions`、`No Bluetooth advertise permission` 只应在权限缺失时出现。
+- `GATT_STATUS_UNKNOWN-[0x85]` 多半与地址变化或设备状态有关，优先重新扫描再连接。
+- `onClientRegistered - status=133 clientIf=0` 表示 GATT client 未释放，优先检查是否执行 BluetoothGatt#close()。
+- `SecurityException` 不应出现在扫描、连接、广播、GATT response、notify、read/write 等主流程日志中。
+
 ### 扫描BLE设备
 
 BLE协议为了保护用户隐私，所有BLE设备暴露出去的device address都是一个随机地址，会定期变化（一般15分钟左右，叠加一个随机值）。
