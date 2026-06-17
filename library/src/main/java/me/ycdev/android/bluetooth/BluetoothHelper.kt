@@ -1,5 +1,7 @@
 package me.ycdev.android.bluetooth
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -10,7 +12,9 @@ import android.bluetooth.le.ScanCallback
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import java.util.Locale
+import me.ycdev.android.lib.common.perms.PermissionUtils
 import me.ycdev.android.lib.common.utils.EncodingUtils.fromHexString
 import timber.log.Timber
 
@@ -29,14 +33,32 @@ object BluetoothHelper {
         return getBluetoothManager(context)?.adapter
     }
 
+    @SuppressLint("MissingPermission")
     fun isBluetoothEnabled(context: Context): Boolean {
+        if (!hasBluetoothConnectPermission(context)) {
+            return false
+        }
         val btAdapter = getBluetoothAdapter(context)
-        return btAdapter != null && btAdapter.isEnabled
+        return try {
+            btAdapter != null && btAdapter.isEnabled
+        } catch (e: SecurityException) {
+            Timber.tag(TAG).w(e, "No permission to check Bluetooth state")
+            false
+        }
     }
 
+    @SuppressLint("MissingPermission")
     fun startBluetoothSysUI(context: Activity, requestCode: Int) {
+        if (!hasBluetoothConnectPermission(context)) {
+            Timber.tag(TAG).w("No Bluetooth connect permission")
+            return
+        }
         val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-        context.startActivityForResult(enableBtIntent, requestCode)
+        try {
+            context.startActivityForResult(enableBtIntent, requestCode)
+        } catch (e: SecurityException) {
+            Timber.tag(TAG).w(e, "Failed to start Bluetooth system UI")
+        }
     }
 
     fun canDoBleOperations(context: Context): Boolean {
@@ -49,15 +71,64 @@ object BluetoothHelper {
             Timber.tag(TAG).w("Failed to get BluetoothAdapter")
             return false
         }
-        if (!btAdapter.isEnabled) {
+        if (!hasBluetoothConnectPermission(context)) {
+            Timber.tag(TAG).w("No Bluetooth connect permission")
+            return false
+        }
+        if (!isBluetoothEnabled(context)) {
             Timber.tag(TAG).w("Bluetooth not enabled")
             return false
         }
         return true
     }
 
+    @SuppressLint("MissingPermission")
     fun isDeviceBonded(context: Context, btAddress: String): Boolean {
-        return getBluetoothAdapter(context)?.bondedDevices?.find { it.address == btAddress } != null
+        if (!hasBluetoothConnectPermission(context)) {
+            return false
+        }
+        return try {
+            getBluetoothAdapter(context)?.bondedDevices?.find { it.address == btAddress } != null
+        } catch (e: SecurityException) {
+            Timber.tag(TAG).w(e, "No permission to query bonded devices")
+            false
+        }
+    }
+
+    fun bleScanPermissions(): Array<String> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    }
+
+    fun bleAdvertisePermissions(): Array<String> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(Manifest.permission.BLUETOOTH_ADVERTISE)
+        } else {
+            emptyArray()
+        }
+    }
+
+    fun bleConnectPermissions(): Array<String> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            emptyArray()
+        }
+    }
+
+    fun hasBluetoothScanPermission(context: Context): Boolean {
+        return PermissionUtils.hasPermissions(context, *bleScanPermissions())
+    }
+
+    fun hasBluetoothAdvertisePermission(context: Context): Boolean {
+        return PermissionUtils.hasPermissions(context, *bleAdvertisePermissions())
+    }
+
+    fun hasBluetoothConnectPermission(context: Context): Boolean {
+        return PermissionUtils.hasPermissions(context, *bleConnectPermissions())
     }
 
     fun gattStatusCodeStr(status: Int): String {

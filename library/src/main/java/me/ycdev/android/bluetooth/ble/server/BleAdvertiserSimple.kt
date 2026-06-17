@@ -1,5 +1,6 @@
 package me.ycdev.android.bluetooth.ble.server
 
+import android.annotation.SuppressLint
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
@@ -61,9 +62,13 @@ class BleAdvertiserSimple(context: Context) : BleAdvertiser {
     }
 
     @WorkerThread
+    @SuppressLint("MissingPermission")
     internal fun startSync(): Boolean {
         if (advertiser == null) {
             if (!BluetoothHelper.canDoBleOperations(appContext)) {
+                return false
+            }
+            if (!hasAdvertisePermission("start advertising")) {
                 return false
             }
 
@@ -76,9 +81,14 @@ class BleAdvertiserSimple(context: Context) : BleAdvertiser {
 
         Timber.tag(TAG).d("Start advertising: %s", callerData)
         return if (!advertsing) {
-            advertiser!!.startAdvertising(callerSettings, callerData, realCallback)
-            advertsing = true
-            true
+            try {
+                advertiser!!.startAdvertising(callerSettings, callerData, realCallback)
+                advertsing = true
+                true
+            } catch (e: SecurityException) {
+                Timber.tag(TAG).w(e, "No permission to start BLE advertising")
+                false
+            }
         } else {
             Timber.tag(TAG).w("Advertising was already started")
             false
@@ -86,15 +96,30 @@ class BleAdvertiserSimple(context: Context) : BleAdvertiser {
     }
 
     @WorkerThread
+    @SuppressLint("MissingPermission")
     internal fun stopSync() {
         Timber.tag(TAG).d("Stop advertising")
         if (advertsing) {
-            advertiser!!.stopAdvertising(realCallback)
+            if (hasAdvertisePermission("stop advertising")) {
+                try {
+                    advertiser!!.stopAdvertising(realCallback)
+                } catch (e: SecurityException) {
+                    Timber.tag(TAG).w(e, "No permission to stop BLE advertising")
+                }
+            }
             callerCallback = null
             advertsing = false
         } else {
             Timber.tag(TAG).w("No advertising started")
         }
+    }
+
+    private fun hasAdvertisePermission(operation: String): Boolean {
+        if (BluetoothHelper.hasBluetoothAdvertisePermission(appContext)) {
+            return true
+        }
+        Timber.tag(TAG).w("No Bluetooth advertise permission to %s", operation)
+        return false
     }
 
     private inner class MyAdvertiseCallback : AdvertiseCallback() {

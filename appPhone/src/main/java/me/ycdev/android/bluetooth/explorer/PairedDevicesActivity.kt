@@ -73,9 +73,12 @@ class PairedDevicesActivity : AppCompatActivity() {
     }
 
     private fun updateContentViews() {
-        binding.content.status.text = getString(
-            R.string.ble_paired_viewer_status,
-            Utils.getTimestamp(), (devices?.size ?: 0)
+        val deviceCount = devices?.size ?: 0
+        binding.content.status.text = resources.getQuantityString(
+            R.plurals.ble_paired_viewer_status,
+            deviceCount,
+            Utils.getTimestamp(),
+            deviceCount
         )
     }
 

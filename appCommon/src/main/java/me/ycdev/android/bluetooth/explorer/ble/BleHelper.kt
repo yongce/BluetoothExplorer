@@ -1,7 +1,6 @@
 package me.ycdev.android.bluetooth.explorer.ble
 
 import android.app.Activity
-import androidx.annotation.NonNull
 import me.ycdev.android.bluetooth.ble.client.BleScanner
 import me.ycdev.android.bluetooth.explorer.common.R.string
 import me.ycdev.android.lib.common.perms.PermissionCallback
@@ -13,9 +12,9 @@ object BleHelper {
     private const val TAG = "BleHelper"
 
     fun requestPermsForBleScan(
-        @NonNull activity: Activity,
+        activity: Activity,
         requestCode: Int,
-        @NonNull callback: PermissionCallback
+        callback: PermissionCallback
     ) {
         Timber.tag(TAG).d("Request perms for BLE scan")
         val params = PermissionRequestParams()

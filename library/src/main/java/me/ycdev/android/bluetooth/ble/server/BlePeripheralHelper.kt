@@ -1,5 +1,6 @@
 package me.ycdev.android.bluetooth.ble.server
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
@@ -41,8 +42,12 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
     fun isAdvertising(): Boolean = bleAdvertiser.isAdvertising()
 
     @WorkerThread
+    @SuppressLint("MissingPermission")
     fun start(): Boolean {
         if (!BluetoothHelper.canDoBleOperations(context)) {
+            return false
+        }
+        if (!hasConnectPermission("start GATT server")) {
             return false
         }
 
@@ -77,9 +82,16 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
     }
 
     @WorkerThread
+    @SuppressLint("MissingPermission")
     fun stop() {
         // Step 1: Stop BLE GATT server
-        gattServer?.close()
+        try {
+            gattServer?.close()
+        } catch (e: SecurityException) {
+            Timber.tag(TAG).w(e, "No permission to close BluetoothGattServer")
+        } finally {
+            gattServer = null
+        }
 
         // Step 2: Stop BLE advertiser
         bleAdvertiser.stopSync()
@@ -101,7 +113,11 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
     }
 
     @WorkerThread
+    @SuppressLint("MissingPermission")
     fun addService(gattServer: BluetoothGattServer, service: BluetoothGattService): Boolean {
+        if (!hasConnectPermission("add GATT service")) {
+            return false
+        }
         return try {
             synchronized(operationLock) {
                 gattServer.addService(service)
@@ -135,6 +151,9 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
         Timber.tag(TAG).d("sendData[%d] to [%s]", data.size, device)
         if (data.isEmpty()) {
             Timber.tag(TAG).w("Zero length data, ignore")
+            return
+        }
+        if (!hasConnectPermission("send data")) {
             return
         }
 
@@ -177,6 +196,7 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun notifyCharacteristicChanged(
         gatt: BluetoothGattServer,
         device: BluetoothDevice,
@@ -195,6 +215,33 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
 
         @Suppress("DEPRECATION")
         return characteristic.setValue(value) && gatt.notifyCharacteristicChanged(device, characteristic, confirm)
+    }
+
+    private fun hasConnectPermission(operation: String): Boolean {
+        if (BluetoothHelper.hasBluetoothConnectPermission(context)) {
+            return true
+        }
+        Timber.tag(TAG).w("No Bluetooth connect permission to %s", operation)
+        return false
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun sendResponse(
+        device: BluetoothDevice,
+        requestId: Int,
+        status: Int,
+        offset: Int,
+        value: ByteArray?
+    ): Boolean {
+        if (!hasConnectPermission("send GATT response")) {
+            return false
+        }
+        return try {
+            gattServer?.sendResponse(device, requestId, status, offset, value) == true
+        } catch (e: SecurityException) {
+            Timber.tag(TAG).w(e, "No permission to send GATT response")
+            false
+        }
     }
 
     private inner class MyGattServerCallback : BluetoothGattServerCallback() {
@@ -235,12 +282,12 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
                 } else {
                     BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
                 }
-                gattServer?.sendResponse(
+                sendResponse(
                     device, requestId, BluetoothGatt.GATT_SUCCESS, 0, result
                 )
             } else {
                 Timber.tag(TAG).w("Unknown descriptor read request uuid[%s]", descriptor.uuid)
-                gattServer?.sendResponse(
+                sendResponse(
                     device, requestId, BluetoothGatt.GATT_FAILURE, 0, null
                 )
             }
@@ -279,12 +326,12 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
                 }
 
                 if (responseNeeded) {
-                    gattServer?.sendResponse(device, requestId, status, 0, null)
+                    sendResponse(device, requestId, status, 0, null)
                 }
             } else {
                 Timber.tag(TAG).w("Unknown descriptor write request uuid[%s]", descriptor.uuid)
                 if (responseNeeded) {
-                    gattServer?.sendResponse(
+                    sendResponse(
                         device, requestId, BluetoothGatt.GATT_FAILURE, 0, null
                     )
                 }
@@ -305,7 +352,7 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
             }
             val value = contract.onCharacteristicReadRequest(characteristic)
             if (value != null) {
-                gattServer!!.sendResponse(
+                sendResponse(
                     device,
                     requestId,
                     BluetoothGatt.GATT_SUCCESS,
@@ -360,7 +407,7 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
             }
 
             if (responseNeeded) {
-                gattServer!!.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, value)
+                sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, value)
             }
         }
 
@@ -371,7 +418,7 @@ internal class BlePeripheralHelper(val context: Context, val contract: Contract)
                     device, requestId, execute
                 )
             }
-            gattServer!!.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+            sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
             val deviceBuffer = writerBuffer[device.address]
             if (deviceBuffer != null) {
                 for ((characteristicInfo, buf) in deviceBuffer) {

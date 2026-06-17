@@ -1,6 +1,6 @@
 package me.ycdev.android.bluetooth.ble.client
 
-import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
@@ -10,7 +10,6 @@ import android.content.Context
 import androidx.annotation.MainThread
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.ble.BleConfigs
-import me.ycdev.android.lib.common.perms.PermissionUtils
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
 
@@ -40,6 +39,7 @@ class BleScanner(context: Context) {
     }
 
     @MainThread
+    @SuppressLint("MissingPermission")
     fun startScanning(listener: ScanListener): Boolean {
         if (leScanner == null) {
             if (!BluetoothHelper.canDoBleOperations(appContext)) {
@@ -56,7 +56,7 @@ class BleScanner(context: Context) {
         }
 
         if (hasNoPermissions(appContext)) {
-            Timber.tag(TAG).w("No location permissions")
+            Timber.tag(TAG).w("No BLE scan permissions")
             return false
         }
 
@@ -76,10 +76,17 @@ class BleScanner(context: Context) {
     }
 
     @MainThread
+    @SuppressLint("MissingPermission")
     fun stopScanning() {
         Timber.tag(TAG).d("Stop scanning")
         if (isScanning) {
-            leScanner!!.stopScan(scanCallback)
+            if (BluetoothHelper.hasBluetoothScanPermission(appContext)) {
+                try {
+                    leScanner!!.stopScan(scanCallback)
+                } catch (e: SecurityException) {
+                    Timber.tag(TAG).w(e, "No permission to stop BLE scanning")
+                }
+            }
             listener = null
             isScanning = false
         }
@@ -94,7 +101,7 @@ class BleScanner(context: Context) {
 
     private fun onDeviceFound(result: ScanResult, tag: String) {
         logScanResult(result, tag)
-        if (onlyNamedDevices && result.device.name == null) {
+        if (onlyNamedDevices && getDeviceName(result) == null) {
             return // skip "UNKNOWN" devices
         }
 
@@ -111,8 +118,45 @@ class BleScanner(context: Context) {
             Timber.tag(TAG).d(
                 "[%s] rssi: %s, address: %s, name: [%s], bondState: %d, type: %d",
                 tag, result.rssi,
-                device.address, device.name, device.bondState, device.type
+                device.address, getDeviceName(result), getBondState(result), getDeviceType(result)
             )
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getDeviceName(result: ScanResult): String? {
+        result.scanRecord?.deviceName?.let { return it }
+        if (!BluetoothHelper.hasBluetoothConnectPermission(appContext)) {
+            return null
+        }
+        return try {
+            result.device.name
+        } catch (e: SecurityException) {
+            null
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getBondState(result: ScanResult): Int {
+        if (!BluetoothHelper.hasBluetoothConnectPermission(appContext)) {
+            return 0
+        }
+        return try {
+            result.device.bondState
+        } catch (e: SecurityException) {
+            0
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getDeviceType(result: ScanResult): Int {
+        if (!BluetoothHelper.hasBluetoothConnectPermission(appContext)) {
+            return 0
+        }
+        return try {
+            result.device.type
+        } catch (e: SecurityException) {
+            0
         }
     }
 
@@ -142,10 +186,11 @@ class BleScanner(context: Context) {
     companion object {
         private const val TAG = "BleScanner"
 
-        val BLE_SCAN_PERMS = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
+        val BLE_SCAN_PERMS: Array<String>
+            get() = BluetoothHelper.bleScanPermissions()
 
         fun hasNoPermissions(context: Context): Boolean {
-            return !PermissionUtils.hasPermissions(context, *BLE_SCAN_PERMS)
+            return !BluetoothHelper.hasBluetoothScanPermission(context)
         }
     }
 }

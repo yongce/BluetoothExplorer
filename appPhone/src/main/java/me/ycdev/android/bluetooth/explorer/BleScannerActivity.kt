@@ -133,14 +133,19 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
     private fun updateContentViews() {
         if (bleScanner.isScanning) {
             binding.content.scanBtn.setText(R.string.ble_scan_stop)
-            binding.content.status.text = getString(
-                R.string.ble_status_scanning,
+            binding.content.status.text = resources.getQuantityString(
+                R.plurals.ble_status_scanning,
+                adapter.itemCount,
                 selectedFilterCheckBox.text,
                 adapter.itemCount
             )
         } else {
             binding.content.scanBtn.setText(R.string.ble_scan_start)
-            binding.content.status.text = getString(R.string.ble_status_scanning_done, adapter.itemCount)
+            binding.content.status.text = resources.getQuantityString(
+                R.plurals.ble_status_scanning_done,
+                adapter.itemCount,
+                adapter.itemCount
+            )
         }
     }
 

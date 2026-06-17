@@ -1,5 +1,6 @@
 package me.ycdev.android.bluetooth.ble.client
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
@@ -53,11 +54,15 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
         return connect(device)
     }
 
+    @SuppressLint("MissingPermission")
     fun connect(device: BluetoothDevice): Boolean {
         Timber.tag(TAG).d("Connect to %s", device)
+        if (!hasConnectPermission("connect")) {
+            return false
+        }
 
         // try to close the previous GATT client first
-        gatt?.close()
+        closeGatt(gatt)
 
         if (state == DISCONNECTED || state == DISCONNECTING) {
             updateState(CONNECTING)
@@ -82,6 +87,7 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
         return gatt != null
     }
 
+    @SuppressLint("MissingPermission")
     fun close() {
         if (gatt != null) {
             Timber.tag(TAG).d("Close the connection")
@@ -89,7 +95,7 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
             //     "BluetoothGatt/D onClientRegistered() - status=133 clientIf=0"
             // The system has limit on the number of GATT clients:
             //     "BluetoothGatt/D onClientRegistered() - status=0 clientIf=32"
-            gatt?.close()
+            closeGatt(gatt)
             gatt = null
             state = DISCONNECTED
         }
@@ -100,10 +106,14 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
     }
 
     @WorkerThread
+    @SuppressLint("MissingPermission")
     private fun doDiscoveryServices() {
         Timber.tag(TAG).d("discovery services...")
         if (state != CONNECTED) {
             Timber.tag(TAG).w("not connected, failed to discovery services")
+            return
+        }
+        if (!hasConnectPermission("discover services")) {
             return
         }
 
@@ -123,8 +133,12 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
     }
 
     @WorkerThread
+    @SuppressLint("MissingPermission")
     fun doListen(characteristic: BluetoothGattCharacteristic) {
         Timber.tag(TAG).d("listener on characteristic: %s", characteristic.uuid)
+        if (!hasConnectPermission("enable notifications")) {
+            return
+        }
         try {
             synchronized(operationLock) {
                 val anyGatt = getConnectedDeviceLocked()
@@ -145,8 +159,12 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
     }
 
     @WorkerThread
+    @SuppressLint("MissingPermission")
     fun doRequestMtu(mtu: Int) {
         Timber.tag(TAG).d("request mtu: %d", mtu)
+        if (!hasConnectPermission("request MTU")) {
+            return
+        }
         try {
             synchronized(operationLock) {
                 val anyGatt = getConnectedDeviceLocked()
@@ -171,6 +189,9 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
         }
         if (state != CONNECTED) {
             Timber.tag(TAG).w("not connected, failed to send data")
+            return
+        }
+        if (!hasConnectPermission("send data")) {
             return
         }
 
@@ -213,6 +234,7 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun writeCharacteristic(
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
@@ -235,10 +257,14 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
     }
 
     @WorkerThread
+    @SuppressLint("MissingPermission")
     private fun doReadData(serviceUuid: UUID, characteristicUUid: UUID, allServices: Boolean) {
         Timber.tag(TAG).d("readData")
         if (state != CONNECTED) {
             Timber.tag(TAG).w("not connected, failed to read data")
+            return
+        }
+        if (!hasConnectPermission("read data")) {
             return
         }
 
@@ -297,6 +323,26 @@ internal class BleCentralHelper(val context: Context, val contract: Contract) : 
         val anyGatt = gatt ?: throw BluetoothException("Bluetooth GATT not connected")
         checkExceptionLocked(anyGatt.device)
         return anyGatt
+    }
+
+    private fun hasConnectPermission(operation: String): Boolean {
+        if (BluetoothHelper.hasBluetoothConnectPermission(context)) {
+            return true
+        }
+        Timber.tag(TAG).w("No Bluetooth connect permission to %s", operation)
+        return false
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun closeGatt(targetGatt: BluetoothGatt?) {
+        if (targetGatt == null) {
+            return
+        }
+        try {
+            targetGatt.close()
+        } catch (e: SecurityException) {
+            Timber.tag(TAG).w(e, "No permission to close BluetoothGatt")
+        }
     }
 
     private fun checkAndNotify(gatt: BluetoothGatt, status: Int, op: Operation) {
