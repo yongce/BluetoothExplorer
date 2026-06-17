@@ -1,7 +1,45 @@
+import java.net.HttpURLConnection
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 group = mavenPublish.groupId
 version = mavenPublish.version
+
+def publicationArtifactId = project.ext.archivesBaseName
+def publicationVersion = version.toString()
+def publishProps = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { publishProps.load(it) }
+}
+
+def publishProperty = { String name ->
+    def value = project.findProperty(name)?.toString()
+    if (value == null || value.isBlank()) {
+        value = rootProject.findProperty(name)?.toString()
+    }
+    if (value == null || value.isBlank()) {
+        value = publishProps.getProperty(name)
+    }
+    if (value == null || value.isBlank()) {
+        value = System.getenv(name.replace('.', '_').toUpperCase(Locale.US))
+    }
+    return value
+}
+
+def centralBundleRepoDir = layout.buildDirectory.dir('central-bundle-repo')
+def centralBundleDir = layout.buildDirectory.dir('distributions')
+def centralBundleZipName = "${publicationArtifactId}-${publicationVersion}-central-bundle.zip"
+def centralBundleZip = layout.buildDirectory.file("distributions/${centralBundleZipName}")
+
+tasks.register('cleanCentralBundleRepository', Delete) {
+    delete centralBundleRepoDir
+}
 
 android {
     publishing {
@@ -20,6 +58,13 @@ tasks.register('androidJavadocsJar', Jar) {
 
 afterEvaluate {
     publishing {
+        repositories {
+            maven {
+                name = 'centralBundle'
+                url = centralBundleRepoDir
+            }
+        }
+
         publications {
             release(MavenPublication) {
                 from components.release
@@ -27,7 +72,7 @@ afterEvaluate {
                 artifact tasks.named('androidJavadocsJar')
 
                 groupId = mavenPublish.groupId
-                artifactId = project.ext.archivesBaseName
+                artifactId = publicationArtifactId
                 version = mavenPublish.version
 
                 pom {
@@ -61,4 +106,100 @@ afterEvaluate {
             }
         }
     }
+
+    def signingKeyId = publishProperty('signing.keyId')
+    def signingKey = publishProperty('signing.key')?.replace('\\n', '\n')
+    def signingPassword = publishProperty('signing.password')
+    if (signingKey != null && !signingKey.isBlank()) {
+        signing {
+            required = {
+                gradle.taskGraph.hasTask(tasks.named('publishReleasePublicationToCentralBundleRepository').get()) ||
+                    gradle.taskGraph.hasTask(tasks.named('uploadCentralBundle').get()) ||
+                    gradle.taskGraph.hasTask(tasks.named('publishBleCommonToCentralPortal').get())
+            }
+            if (signingKeyId != null && !signingKeyId.isBlank()) {
+                useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+            } else {
+                useInMemoryPgpKeys(signingKey, signingPassword)
+            }
+            sign publishing.publications.release
+        }
+    }
+}
+
+tasks.register('centralBundleZip', Zip) {
+    group = 'publishing'
+    description = 'Builds a Maven Central Portal deployment bundle for ble-common.'
+    dependsOn tasks.named('publishReleasePublicationToCentralBundleRepository')
+    archiveFileName.set(centralBundleZipName)
+    destinationDirectory.set(centralBundleDir)
+    from centralBundleRepoDir
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+    if (name == 'publishReleasePublicationToCentralBundleRepository') {
+        dependsOn tasks.named('cleanCentralBundleRepository')
+    }
+}
+
+tasks.register('uploadCentralBundle') {
+    group = 'publishing'
+    description = 'Uploads the ble-common deployment bundle to the Maven Central Portal.'
+    dependsOn tasks.named('centralBundleZip')
+    inputs.file(centralBundleZip)
+
+    doLast {
+        def username = publishProperty('ossrhUsername')
+        def password = publishProperty('ossrhPassword')
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            throw new GradleException('Missing ossrhUsername/ossrhPassword in local.properties or Gradle properties.')
+        }
+
+        def publishingType = (publishProperty('centralPublishingType') ?: 'AUTOMATIC').toUpperCase(Locale.US)
+        if (!(publishingType in ['USER_MANAGED', 'AUTOMATIC'])) {
+            throw new GradleException("Invalid centralPublishingType '${publishingType}'. Use USER_MANAGED or AUTOMATIC.")
+        }
+
+        def deploymentName = publishProperty('centralDeploymentName') ?: "${publicationArtifactId}-${publicationVersion}"
+        def uploadUrl = "https://central.sonatype.com/api/v1/publisher/upload" +
+            "?name=${URLEncoder.encode(deploymentName, StandardCharsets.UTF_8.name())}" +
+            "&publishingType=${publishingType}"
+
+        def bundleFile = centralBundleZip.get().asFile
+        def boundary = "----BluetoothExplorer${System.currentTimeMillis()}"
+        def credentials = Base64.encoder.encodeToString("${username}:${password}".getBytes(StandardCharsets.UTF_8))
+        def lineEnd = '\r\n'
+
+        def connection = (HttpURLConnection) new URL(uploadUrl).openConnection()
+        connection.requestMethod = 'POST'
+        connection.doOutput = true
+        connection.setRequestProperty('Authorization', "Bearer ${credentials}")
+        connection.setRequestProperty('Content-Type', "multipart/form-data; boundary=${boundary}")
+
+        connection.outputStream.withCloseable { output ->
+            output.write(("--${boundary}${lineEnd}").getBytes(StandardCharsets.UTF_8))
+            output.write(("Content-Disposition: form-data; name=\"bundle\"; filename=\"${bundleFile.name}\"${lineEnd}").getBytes(StandardCharsets.UTF_8))
+            output.write(("Content-Type: application/octet-stream${lineEnd}${lineEnd}").getBytes(StandardCharsets.UTF_8))
+            bundleFile.withInputStream { input -> output << input }
+            output.write((lineEnd + "--${boundary}--${lineEnd}").getBytes(StandardCharsets.UTF_8))
+        }
+
+        def status = connection.responseCode
+        def responseStream = status >= 400 ? connection.errorStream : connection.inputStream
+        def responseBody = responseStream == null ? '' : responseStream.getText(StandardCharsets.UTF_8.name()).trim()
+        if (status < 200 || status >= 300) {
+            throw new GradleException("Central Portal upload failed with HTTP ${status}: ${responseBody}")
+        }
+
+        def deploymentIdFile = layout.buildDirectory.file('central/deployment-id.txt').get().asFile
+        deploymentIdFile.parentFile.mkdirs()
+        deploymentIdFile.text = responseBody + System.lineSeparator()
+        logger.lifecycle("Uploaded Maven Central deployment '${deploymentName}' (${publishingType}). Deployment id written to ${deploymentIdFile}.")
+    }
+}
+
+tasks.register('publishBleCommonToCentralPortal') {
+    group = 'publishing'
+    description = 'Builds, signs, bundles, and uploads ble-common to the Maven Central Portal.'
+    dependsOn tasks.named('uploadCentralBundle')
 }
