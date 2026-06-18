@@ -10,8 +10,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioButton
-import androidx.annotation.NonNull
-import androidx.annotation.Nullable
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.util.forEach
@@ -78,7 +76,7 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
         bleDevices[Tp2.ID] = Tp2()
     }
 
-    override fun onCreate(@Nullable savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityScannerBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -161,8 +159,8 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        @NonNull permissions: Array<String>,
-        @NonNull grantResults: IntArray
+        permissions: Array<String>,
+        grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == RC_BLE_SCAN_PERMS) {
@@ -195,7 +193,7 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
         bleScanner.stopScanning()
     }
 
-    override fun onDeviceFound(@NonNull result: ScanResult) {
+    override fun onDeviceFound(result: ScanResult) {
         val scanInfo = BleScanInfo(result)
         val filter = binding.content.scanRecordFilter.text.toString()
         if (!curDevice!!.checkScanResult(result, filter)) {
@@ -269,11 +267,11 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
     }
 
     private class MyDiffItemCallback : DiffUtil.ItemCallback<BleScanInfo>() {
-        override fun areItemsTheSame(@NonNull oldItem: BleScanInfo, @NonNull newItem: BleScanInfo): Boolean {
+        override fun areItemsTheSame(oldItem: BleScanInfo, newItem: BleScanInfo): Boolean {
             return oldItem.scanResult.device.address == newItem.scanResult.device.address
         }
 
-        override fun areContentsTheSame(@NonNull oldItem: BleScanInfo, @NonNull newItem: BleScanInfo): Boolean {
+        override fun areContentsTheSame(oldItem: BleScanInfo, newItem: BleScanInfo): Boolean {
             return oldItem.scanResult.device.address == newItem.scanResult.device.address &&
                     oldItem.scanResult.timestampNanos == newItem.scanResult.timestampNanos
         }
@@ -295,7 +293,6 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
             scanResults.clear()
             curDeviceNumber = 0
             submitList(null)
-            notifyDataSetChanged()
         }
 
         fun addItem(item: BleScanInfo) {
@@ -310,16 +307,14 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
             val data = ArrayList<BleScanInfo>(scanResults.values)
             Collections.sort(data, deviceComparator)
             submitList(data)
-            notifyDataSetChanged()
         }
 
-        @NonNull
-        override fun onCreateViewHolder(@NonNull parent: ViewGroup, viewType: Int): MyViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
             val itemView = inflater.inflate(R.layout.devices_list_item, parent, false)
             return MyViewHolder(itemView)
         }
 
-        override fun onBindViewHolder(@NonNull holder: MyViewHolder, position: Int) {
+        override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
             val item = getItem(position)
             val btDevice = item.scanResult.device
 

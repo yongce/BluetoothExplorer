@@ -8,8 +8,6 @@ import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.NonNull
-import androidx.annotation.Nullable
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DiffUtil
@@ -31,7 +29,7 @@ class PairedDevicesActivity : AppCompatActivity() {
     private lateinit var adapter: MyAdapter
     private var devices: MutableList<BluetoothDevice>? = null
 
-    override fun onCreate(@Nullable savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityPairedDevicesBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -112,11 +110,11 @@ class PairedDevicesActivity : AppCompatActivity() {
     }
 
     private class MyDiffItemCallback : DiffUtil.ItemCallback<BluetoothDevice>() {
-        override fun areItemsTheSame(@NonNull oldItem: BluetoothDevice, @NonNull newItem: BluetoothDevice): Boolean {
+        override fun areItemsTheSame(oldItem: BluetoothDevice, newItem: BluetoothDevice): Boolean {
             return oldItem.address == newItem.address
         }
 
-        override fun areContentsTheSame(@NonNull oldItem: BluetoothDevice, @NonNull newItem: BluetoothDevice): Boolean {
+        override fun areContentsTheSame(oldItem: BluetoothDevice, newItem: BluetoothDevice): Boolean {
             return oldItem.address == newItem.address
         }
     }
@@ -129,13 +127,12 @@ class PairedDevicesActivity : AppCompatActivity() {
         private val inflater: LayoutInflater = LayoutInflater.from(context)
         private val unknownDeviceName: String = context.getString(R.string.ble_unknown_device)
 
-        @NonNull
-        override fun onCreateViewHolder(@NonNull parent: ViewGroup, viewType: Int): MyViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
             val itemView = inflater.inflate(R.layout.devices_list_item, parent, false)
             return MyViewHolder(itemView)
         }
 
-        override fun onBindViewHolder(@NonNull holder: MyViewHolder, position: Int) {
+        override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
             val item = getItem(position)
             var name = BluetoothDeviceUtils.getDeviceName(context, item)
             if (TextUtils.isEmpty(name)) {
