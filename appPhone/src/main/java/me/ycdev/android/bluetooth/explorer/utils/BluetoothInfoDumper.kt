@@ -1,15 +1,17 @@
 package me.ycdev.android.bluetooth.explorer.utils
 
 import android.bluetooth.BluetoothDevice
+import android.content.Context
 
 object BluetoothInfoDumper {
-    fun dumpDevice(device: BluetoothDevice, dump: (String) -> Unit) {
-        dump("\nDump of device ${device.address} (${device.name})")
-        dumpUuids(device, dump)
+    fun dumpDevice(context: Context, device: BluetoothDevice, dump: (String) -> Unit) {
+        val deviceName = BluetoothDeviceUtils.getDeviceName(context, device)
+        dump("\nDump of device ${device.address} ($deviceName)")
+        dumpUuids(context, device, dump)
     }
 
-    fun dumpUuids(device: BluetoothDevice, dump: (String) -> Unit) {
-        val uuids = device.uuids
+    fun dumpUuids(context: Context, device: BluetoothDevice, dump: (String) -> Unit) {
+        val uuids = BluetoothDeviceUtils.getDeviceUuids(context, device)
         if (uuids.isNullOrEmpty()) {
             dump("No UUIDs found\n")
         } else {

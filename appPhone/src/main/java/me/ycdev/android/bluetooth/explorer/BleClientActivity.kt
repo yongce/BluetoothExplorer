@@ -25,6 +25,7 @@ import me.ycdev.android.bluetooth.ble.ext.MagicPingClient
 import me.ycdev.android.bluetooth.ble.ext.MagicRadioClient
 import me.ycdev.android.bluetooth.ble.sig.BatteryServiceClient
 import me.ycdev.android.bluetooth.explorer.databinding.ActivityBleClientBinding
+import me.ycdev.android.bluetooth.explorer.utils.BluetoothDeviceUtils
 import timber.log.Timber
 
 class BleClientActivity : AppCompatActivity() {
@@ -101,9 +102,7 @@ class BleClientActivity : AppCompatActivity() {
             binding.content.connectBtn.setText(R.string.ble_client_connect)
         }
 
-        if (device?.bondState == BluetoothDevice.BOND_BONDED) {
-            binding.content.pairBtn.isEnabled = false
-        }
+        binding.content.pairBtn.isEnabled = !BluetoothDeviceUtils.isDeviceBonded(this, device)
     }
 
     @SuppressLint("SetTextI18n")
@@ -130,9 +129,10 @@ class BleClientActivity : AppCompatActivity() {
         val started = gattClient.isStarted()
         Timber.tag(TAG).d("BLE client is started: %s", started)
         if (!started) {
-            val deviceName = device!!.name ?: getString(R.string.ble_unknown_device)
-            addStatusLog(R.string.ble_status_client_connecting, device!!.address, deviceName)
-            gattClient.connect(device!!, gattCallback)
+            val targetDevice = device ?: return
+            val deviceName = BluetoothDeviceUtils.getDeviceName(this, targetDevice)
+            addStatusLog(R.string.ble_status_client_connecting, targetDevice.address, deviceName)
+            gattClient.connect(targetDevice, gattCallback)
         } else {
             gattClient.close()
         }
@@ -180,8 +180,13 @@ class BleClientActivity : AppCompatActivity() {
         val intentFilter = IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         registerReceiver(receiver, intentFilter)
 
-        addStatusLog(R.string.ble_status_client_pairing, device!!.address, device!!.name)
-        if (device?.createBond() != true) {
+        val targetDevice = device ?: return
+        addStatusLog(
+            R.string.ble_status_client_pairing,
+            targetDevice.address,
+            BluetoothDeviceUtils.getDeviceName(this, targetDevice)
+        )
+        if (!BluetoothDeviceUtils.createBond(this, targetDevice)) {
             addStatusLog(R.string.ble_status_client_pair_failed)
         }
     }
@@ -214,7 +219,7 @@ class BleClientActivity : AppCompatActivity() {
                 addStatusLog(
                     R.string.ble_status_client_pair_state_changed,
                     BluetoothHelper.bondStateStr(state),
-                    device.address, device.name
+                    device.address, BluetoothDeviceUtils.getDeviceName(this@BleClientActivity, device)
                 )
                 updateContentViews()
 

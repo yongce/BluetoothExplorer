@@ -45,6 +45,7 @@ import me.ycdev.android.bluetooth.explorer.ble.device.TimeService
 import me.ycdev.android.bluetooth.explorer.ble.device.Tp2
 import me.ycdev.android.bluetooth.explorer.databinding.ActivityScannerBinding
 import me.ycdev.android.bluetooth.explorer.databinding.DevicesListItemBinding
+import me.ycdev.android.bluetooth.explorer.utils.BluetoothDeviceUtils
 import me.ycdev.android.lib.common.perms.PermissionCallback
 import me.ycdev.android.lib.common.perms.PermissionUtils
 import me.ycdev.android.lib.common.utils.EncodingUtils.encodeWithHex
@@ -163,6 +164,7 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
         @NonNull permissions: Array<String>,
         @NonNull grantResults: IntArray
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == RC_BLE_SCAN_PERMS) {
             if (PermissionUtils.verifyPermissions(grantResults)) {
                 scanBleDevices()
@@ -321,7 +323,8 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
             val item = getItem(position)
             val btDevice = item.scanResult.device
 
-            var name = btDevice.name
+            var name = item.scanResult.scanRecord?.deviceName
+                ?: BluetoothDeviceUtils.getDeviceName(context, btDevice)
             if (TextUtils.isEmpty(name)) {
                 name = unknownDeviceName
             }
@@ -379,6 +382,7 @@ class BleScannerActivity : AppCompatActivity(), View.OnClickListener, Permission
                 context.startActivity(intent)
             }
         }
+
     }
 
     class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

@@ -8,6 +8,7 @@ import android.os.IBinder
 import com.mobvoi.bt.profile.A2dpProfileMonitor
 import com.mobvoi.bt.profile.BluetoothProfileListener
 import me.ycdev.android.bluetooth.explorer.BuildConfig
+import me.ycdev.android.bluetooth.explorer.utils.BluetoothDeviceUtils
 import me.ycdev.android.bluetooth.explorer.utils.BluetoothInfoDumper
 import timber.log.Timber
 
@@ -45,11 +46,11 @@ class DebugService : Service(), BluetoothProfileListener {
         if (a2dpProfile == null) {
             dump("A2DP proxy not connected yet\n")
         } else {
-            val a2dpDevices = a2dpProfile.connectedDevices
+            val a2dpDevices = BluetoothDeviceUtils.getConnectedDevices(this, a2dpProfile)
             if (a2dpDevices.isNullOrEmpty()) {
                 dump("No connected A2DP devices\n")
             } else {
-                a2dpDevices.forEach { BluetoothInfoDumper.dumpDevice(it, dump) }
+                a2dpDevices.forEach { BluetoothInfoDumper.dumpDevice(this, it, dump) }
             }
         }
     }

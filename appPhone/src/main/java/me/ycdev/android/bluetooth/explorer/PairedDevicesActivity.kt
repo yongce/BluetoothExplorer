@@ -21,6 +21,7 @@ import java.util.Objects
 import me.ycdev.android.bluetooth.BluetoothHelper
 import me.ycdev.android.bluetooth.explorer.databinding.ActivityPairedDevicesBinding
 import me.ycdev.android.bluetooth.explorer.databinding.DevicesListItemBinding
+import me.ycdev.android.bluetooth.explorer.utils.BluetoothDeviceUtils
 import me.ycdev.android.lib.common.utils.MainHandler
 import timber.log.Timber
 
@@ -104,7 +105,7 @@ class PairedDevicesActivity : AppCompatActivity() {
             return
         }
 
-        devices = BluetoothHelper.getBluetoothAdapter(this)?.bondedDevices?.toMutableList()
+        devices = BluetoothDeviceUtils.getBondedDevices(this)
         adapter.submitList(devices)
 
         updateContentViews()
@@ -136,7 +137,7 @@ class PairedDevicesActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(@NonNull holder: MyViewHolder, position: Int) {
             val item = getItem(position)
-            var name = item.name
+            var name = BluetoothDeviceUtils.getDeviceName(context, item)
             if (TextUtils.isEmpty(name)) {
                 name = unknownDeviceName
             }
